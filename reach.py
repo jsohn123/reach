@@ -81,14 +81,14 @@ def deriv_ea_nodist(t,y,n,sys):
 
     return dxdt
 
-def update_sys(t_now,t0):
+def update_sys(sys,t_now,t0):
 
-    sys = System()
-    A = np.array([[1, 0, 0],
-                  [0, 1, 0],
-                  [0, 0, 1]])
-
-    sys.A = np.reshape(A, (3, 3))
+    #sys = System()
+    #A = np.array([[1, 0, 0],
+    #              [0, 1, 0],
+    #              [0, 0, 1]])
+#
+    #sys.A = np.reshape(A, (3, 3))
 
     sys.F = linalg.expm((sys.A)*(t_now-t0))
 
@@ -97,59 +97,132 @@ def update_sys(t_now,t0):
     #             [0, 0, 1]])
     #sys.F = np.reshape(F, (3, 3))
 
-    BPB = np.array([[1, 0, 0],
-                  [0, 1, 0],
-                  [0, 0, 1]])
-    sys.BPB = np.reshape(BPB, (3, 3))
+    #BPB = np.array([[1, 0, 0],
+    #              [0, 1, 0],
+    #              [0, 0, 1]])
+    #sys.BPB = np.reshape(BPB, (3, 3))
 
-    sys.L0 = np.array([[1, 0, 0]]).T
+    #sys.L0 = np.array([[1, 0, 0]]).T
 
     return sys
 
-def reach():
 
 
-    #Amat = np.random.randn(3, 3)
+def system_init():
 
-    Amat = np.array([[np.random.random_integers(1,5), 0, 0],
-                   [0, np.random.random_integers(1,5), 0],
-                   [0, 0, np.random.random_integers(1,5)]])
+    #setup target system model here
+    sys = System()
+
+    A = np.array([[1, 0, 0],
+                  [0, 1, 0],
+                  [0, 0, 1]])
 
 
-    #A = np.random.rand(3,3)
-    #Amat = np.dot(A, A.T) #positive semi definite
-    y0 = np.reshape(Amat, 3*3)
 
-    print "Amat"
-    print Amat
-    print "init" + str(y0)
+    sys.A = np.reshape(A, (3, 3)) #packed in matrix form
 
-    t0=0
-    t1 = 3
-    dt = 0.01
-    n = 3
+
+    B = np.array([[1, 0, 0],
+                  [0, 1, 0],
+                  [0, 0, 1]])
+
+    sys.B = np.reshape(B, (3, 3))  # packed in matrix form
+
+
+    P =  np.array([[1, 0, 0],
+                  [0, 1, 0],
+                  [0, 0, 1]])
+
+    sys.P = np.reshape(P, (3, 3))  # packed in matrix form
+
+
+    sys.BPB = np.linalg.multi_dot([sys.B, sys.P, sys.B ])
+
+    sys.L = np.array([[1, 0, 0],
+                      [0, 1, 0],
+                      [0, 0, 1]])
+
+    X0 =  np.array([[1, 0, 0],
+                  [0, 1, 0],
+                  [0, 0, 1]])
+
+    #X0= np.array([[np.random.random_integers(1,5), 0, 0],
+    #               [0, np.random.random_integers(1,5), 0],
+    #               [0, 0, np.random.random_integers(1,5)]])
+
+    sys.X0 = np.reshape(X0, (3, 3))  # packed in matrix form
+
+    sys.num_search = 3
+    sys.n = 3
+
+    sys.t0 = 0
+    sys.t1 = 3
+    sys.dt=0.01
+
+    sys.len_prop = int(np.ceil(float((sys.t1 - sys.t0) / sys.dt))) + 2
+    return sys
+
+
+def reach_per_search(sys):
+    #returns timeseries evolution of reachable set
+    y0 = np.reshape(sys.X0, 3 * 3)
+
+    t0 = sys.t0
+    t1 = sys.t1
+    dt = sys.dt
+
+    len_prop = sys.len_prop
+    tube = np.zeros((sys.n*sys.n, len_prop), dtype=np.float)
 
     r = ode(deriv_ea_nodist).set_integrator('dopri5')
-    r.set_initial_value(y0,t0).set_f_params(n)
+    r.set_initial_value(y0, t0).set_f_params(sys.n)
 
-    print "start"
-    #print A0
+    tube[:,0] = y0
 
+    i = 1
     while r.successful() and r.t < t1:
-
-        sys = update_sys(r.t,t0) #update transition mat phi
-        #update sys
-        r.set_f_params(n,sys)
+        update_sys(sys, r.t, t0)  # update transition mat phi
+        # update sys
+        r.set_f_params(sys.n, sys)
         r.integrate(r.t + dt)
-        #print("%g %g" % (r.t, r.y))
-        #print r.t
-        #print "result"
-        #print np.reshape(r.y, (n, n))
+        tube[:,i] = r.y
+        i += 1
+        #print i
 
-    #print r.t
-    print "done"
-    #print r.y
-    print np.reshape(r.y, (n, n))
+
+
+
+        # print("%g %g" % (r.t, r.y))
+        # print r.t
+        # print "result"
+        # print np.reshape(r.y, (n, n))
+
+    # print r.t
+    #print "done"
+    # print r.y
+    #print np.reshape(r.y, (sys.n, sys.n))
+    #print np.reshape(tube[:,-1], (sys.n, sys.n))
+
+    return tube
+
+def reach():
+    sys = system_init()
+
+    #center calculation here
+
+
+    reach_set =np.empty((sys.n*sys.n, sys.len_prop, sys.num_search))
+    #initialize the shape matrix tube
+
+    for i in range(sys.num_search):
+        sys.L0 = sys.L[i].T
+        tube = reach_per_search(sys)
+        reach_set[:,:,i] = tube
+
+
+    #graphing here
+
+    print np.reshape(reach_set[:,-1,0], (sys.n, sys.n))
 
 def ode_integrate():
     #Ab = np.array([[-0.25, 0, 0],
