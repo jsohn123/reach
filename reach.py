@@ -287,10 +287,10 @@ def system_init_LC():
     sys.len_prop = int(np.ceil(float((sys.t1 - sys.t0) / sys.dt))) + 2
     return sys
 
-def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set):
+def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set,render_length):
 
     V = np.empty([3, 1])
-    for t in range(sys.len_prop-1): #for each time prop
+    for t in range(render_length-1): #for each time prop
         #print t
 
         wheel_slice = np.zeros((2,num_spokes_per_slice), dtype=np.float)
@@ -307,9 +307,19 @@ def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set):
                 #print np.reshape(reach_set[:,4, 1], (sys.n, sys.n))
 
                 #INVERSION IS HAPPENING DUE TO DEFINITION OF ELLIPSOID USING SHAPE MATRIX
+
                 Q = np.reshape(reach_set[:, t, ellipsoid_index], (sys.n, sys.n))
                 Q = np.linalg.inv(Q)
                 Q = Q.T
+
+                #try:
+                #    Q = np.reshape(reach_set[:, t, ellipsoid_index], (sys.n, sys.n))
+                #    Q = np.linalg.inv(Q)
+                #    Q = Q.T
+                #except:
+                #    print "SINGULAR Q"
+                #    print "time: " + str(t)
+                #    print Q
                 #Q = np.reshape(reach_set[:,t, ellipsoid_index], (sys.n, sys.n))
                 #Q = Q.T #as matlab does it...
                 v = np.linalg.multi_dot([spoke.T, Q, spoke])
@@ -319,7 +329,7 @@ def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set):
             #finished getting max reach of this spoke
             adjusted_spoke = spoke/np.sqrt(mval)  #must make sure mval is set to abstol or else divide by 0
             #add center trajectory here
-            wheel_slice[:,spoke_index] = adjusted_spoke
+            wheel_slice[:,spoke_index] = adjusted_spoke + center_trajectory[:,t]
         #just finished wheel slice per time
 
         #create time stamp copies for slice points here [tt;X]
@@ -345,7 +355,7 @@ def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set):
 
 
     return V
-def reach_gui(sys,center_trajectory, reach_set):
+def reach_gui(sys,center_trajectory, reach_set,render_length):
     print "generating vertices and facets"
 
     num_spokes_per_slice = 200
@@ -357,7 +367,7 @@ def reach_gui(sys,center_trajectory, reach_set):
     #print unit_spokes
     #print phi*180/np.pi
 
-    vertices = reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set)
+    vertices = reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set, render_length)
     #tube slice rendering vector numbers
     #sys.len_prop #time stamps
     F = triag_facets(num_spokes_per_slice, sys.len_prop)
@@ -407,9 +417,13 @@ def reach_gui(sys,center_trajectory, reach_set):
 
     #print F
 
-def reach_per_search(sys):
+def reach_per_search(sys, evolve = False, y0 = []):
     #returns timeseries evolution of reachable set
-    y0 = np.reshape(sys.X0, sys.n * sys.n) #3*3
+
+    if evolve:
+        print "evolving from latest tube result"
+    else:
+        y0 = np.reshape(sys.X0, sys.n * sys.n) #3*3
 
     t0 = sys.t0
     t1 = sys.t1
@@ -462,13 +476,18 @@ def deriv_reach_center(t,y,sys):
     #dxdt = A * x + Bp
     #print "dxdt" +str(dxdt)
     return np.reshape(dxdt,(sys.n,1))
-def reach_center(sys):
+def reach_center(sys,evolve = False, y0=[]):
     #center calculation here
 
     #[tt, xx] = ell_ode_solver( @ ell_center_ode, tvals, x0, mydata, d1, back);
 
     #y0 = np.reshape(sys.xc, (sys.n,1))  #nx1
-    y0 = np.reshape(sys.xc, (sys.n))
+
+    if evolve:
+        print "evolving center from latest result"
+        #print y0
+    else:
+        y0 = np.reshape(sys.xc, (sys.n))
     t0 = sys.t0
     t1 = sys.t1
     dt = sys.dt
@@ -513,21 +532,52 @@ def inspect_slice(reach_set,sys):
         print sys.L[i].T
         print reach_set[:, 171, i]
 
-def evolve_nodist(reach_set,sys, extra_time):
-    switch_system(sys)
+def evolve_nodist(prev_reach_set,prev_center_trajectory,sys, extra_time):
+    switch_system(sys) #only update system matrix, not
 
     #sys.num_search = 2
     #sys.n = 2
     #sys.abs_tol = 0.0001
-    #sys.t0 = 0.0
-    #sys.t1 = 10.0
-    #sys.dt = float(float(sys.t1 - sys.t0)) / 200
-    #sys.len_prop = int(np.ceil(float((sys.t1 - sys.t0) / sys.dt))) + 2
+    sys.t0 = sys.t1
+    sys.t1 = sys.t1 + extra_time
+    sys.dt = float(float(sys.t1 - sys.t0)) / 200
+    extra_len_prop = int(np.ceil(float((sys.t1 - sys.t0) / sys.dt))) + 2
 
-    #update system variables here
 
-    #calculate extended portion of evolution per direction
-    #concatenate
+
+    prev_len_prop = sys.len_prop
+    sys.len_prop = extra_len_prop
+
+    print "prev_len_prop" + str(prev_len_prop)
+    print "extra_len_prop" + str(extra_len_prop)
+    #print "DEBUG"
+    #print prev_center_trajectory[:,-1]
+
+    evolved_center_trajectory = reach_center(sys,evolve = True, y0 = prev_center_trajectory[:,200])
+
+    reach_set = np.empty((sys.n * sys.n, sys.len_prop, sys.num_search))
+
+
+    print "DEBUG"
+
+    #print prev_reach_set[:, 199, 1]
+    #print prev_reach_set[:,200,1]
+    #print prev_reach_set[:,201,1]
+
+    for i in range(sys.num_search):
+        sys.L0 = sys.L[i].T
+        tube = reach_per_search(sys, evolve= True, y0 = prev_reach_set[:,200,i])
+        reach_set[:,:,i] = tube    #time_series x vectorized shape matrix x search direction
+
+    #print prev_reach_set.shape
+    #print reach_set.shape
+
+    combined_reach_set = np.concatenate((prev_reach_set[:,0:-2,:],reach_set),axis = 1)
+    combined_center_trajectory = np.concatenate((prev_center_trajectory[:,0:-2],evolved_center_trajectory),axis = 1)
+    #print combined_set.shape
+    sys.len_prop = prev_len_prop + extra_len_prop
+
+    return combined_reach_set, combined_center_trajectory
 
 def reach():
     sys = system_init_LC()
@@ -548,7 +598,8 @@ def reach():
         tube = reach_per_search(sys)
         reach_set[:,:,i] = tube    #time_series x vectorized shape matrix x search direction
 
-    inspect_slice(reach_set,sys)
+    #inspect_slice(reach_set,sys)
+
 
     #print "sys.BPB"
     #print sys.BPB
@@ -556,13 +607,17 @@ def reach():
 
     #graphing here after applying projection in orthogonal vector -> simply BB.T * shape matrix, where BB is normalized orthogonal basis
 
-    print reach_set.shape
+    #print reach_set.shape
     #print np.reshape(reach_set[:,170,0], (sys.n, sys.n))
 
     #print np.reshape(reach_set[:,170, 1], (sys.n, sys.n))
 
 
-    reach_gui(sys,center_trajectory,reach_set)
+    #reach_gui(sys,center_trajectory,reach_set,render_length=sys.len_prop)
+    evolved_reach_set, evolved_center_trajectory = evolve_nodist(reach_set,center_trajectory,sys,extra_time=2)
+
+    print sys.len_prop
+    reach_gui(sys,evolved_center_trajectory,evolved_reach_set[:,0:-2,:], render_length = 400)
 def ode_integrate():
     #Ab = np.array([[-0.25, 0, 0],
     #               [0.25, -0.2, 0],
