@@ -11,36 +11,6 @@ import matlab.engine
 
 import sys
 
-
-def ell_valign(v,x):
-
-    #check for dimension, raise error
-
-    U1, s1, V1 = np.linalg.svd(v,full_matrices=False)
-    U2, s2, V2 = np.linalg.svd(x,full_matrices=False)
-
-    #print U1.shape, s1.shape, V1.shape
-
-    T = np.linalg.multi_dot([U1, V1, V2.T, U2.T])
-
-    return T
-
-def ee_ode_feed():
-    print "this is where we calculate the dX/dt in shape matrix"
-
-def deriv(t,A,Ab):
-    A = np.reshape(A,(3,3))
-
-    print "got it back"
-    print A
-    rate = np.dot(Ab, A)
-
-
-    #print "rate"
-    #print rate
-
-    return np.reshape(rate,3*3) #vectorize
-
 class System(object):
     def __init__(self):
         self.A = []
@@ -50,6 +20,8 @@ class System(object):
         self.xc =[]
         self.Bp = []
 
+def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 def triag_facets(epoints_num, points_num):
   td = np.arange(1,points_num+1)
   I =  np.arange(1,epoints_num )
@@ -143,59 +115,6 @@ def update_sys(sys,t_now,t0):
 
     return sys
 
-def system_init():
-
-    #setup target system model here
-    sys = System()
-
-    A = np.array([[1, 0, 0],
-                  [0, 1, 0],
-                  [0, 0, 1]])
-
-
-
-    sys.A = np.reshape(A, (3, 3)) #packed in matrix form
-
-
-    B = np.array([[1, 0, 0],
-                  [0, 1, 0],
-                  [0, 0, 1]])
-
-    sys.B = np.reshape(B, (3, 3))  # packed in matrix form
-
-
-    P =  np.array([[1, 0, 0],
-                  [0, 1, 0],
-                  [0, 0, 1]])
-
-    sys.P = np.reshape(P, (3, 3))  # packed in matrix form
-
-
-    sys.BPB = np.linalg.multi_dot([sys.B, sys.P, sys.B ])
-
-    sys.L = np.array([[1, 0, 0],
-                      [0, 1, 0],
-                      [0, 0, 1]])
-
-    X0 =  np.array([[1, 0, 0],
-                  [0, 1, 0],
-                  [0, 0, 1]])
-
-    #X0= np.array([[np.random.random_integers(1,5), 0, 0],
-    #               [0, np.random.random_integers(1,5), 0],
-    #               [0, 0, np.random.random_integers(1,5)]])
-
-    sys.X0 = np.reshape(X0, (3, 3))  # packed in matrix form
-
-    sys.num_search = 3
-    sys.n = 3
-    sys.t0 = 0
-    sys.t1 = 10
-    sys.dt=0.01
-
-    sys.len_prop = int(np.ceil(float((sys.t1 - sys.t0) / sys.dt))) + 2
-    return sys
-
 def switch_system(sys):
     #L2 = 1
     #R2 = 2
@@ -220,7 +139,6 @@ def switch_system(sys):
     sys.P = np.reshape(P, (2, 2))  # packed in matrix form
 
     sys.BPB = np.linalg.multi_dot([sys.B, sys.P, sys.B.T])
-
 
 def system_init_LC():
 
@@ -280,18 +198,20 @@ def system_init_LC():
     sys.n = 2
     sys.abs_tol = 0.0001
     sys.t0 = 0.0
-    sys.t1 = 10.0
+    sys.t1 = 10
     sys.dt=float(float(sys.t1-sys.t0))/200
     #sys.dt = 0.001
     print "sys dt " + str(sys.dt)
-    sys.len_prop = int(np.ceil(float((sys.t1 - sys.t0) / sys.dt))) + 2
+    print "proposed len_prop: " + str( int(np.ceil(float((sys.t1 - sys.t0) / sys.dt))))
+    sys.len_prop = int(np.ceil(float((sys.t1 - sys.t0) / sys.dt))) +1 #1st element is used by y0
     return sys
 
 def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set,render_length):
 
     V = np.empty([3, 1])
     for t in range(render_length-1): #for each time prop
-        #print t
+        #print "t: " + str(t)
+
 
         wheel_slice = np.zeros((2,num_spokes_per_slice), dtype=np.float)
         for spoke_index in range(num_spokes_per_slice):
@@ -301,7 +221,7 @@ def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set,r
             mval = sys.abs_tol #initializing spoke length max value search
 
             for ellipsoid_index in range(sys.num_search):
-                #print ellipsoid_index
+                #print "ellipsoidal_index: " + str(ellipsoid_index)
 
                 #max spoke radius search (EA)
                 #print np.reshape(reach_set[:,4, 1], (sys.n, sys.n))
@@ -430,6 +350,7 @@ def reach_per_search(sys, evolve = False, y0 = []):
     dt = sys.dt
 
     len_prop = sys.len_prop
+    #print "len_prop: " + str(len_prop)
     tube = np.zeros((sys.n*sys.n, len_prop), dtype=np.float)
 
     r = ode(deriv_ea_nodist).set_integrator('dopri5')
@@ -438,7 +359,7 @@ def reach_per_search(sys, evolve = False, y0 = []):
     tube[:,0] = y0
 
     i = 1
-    while r.successful() and r.t <= t1:
+    while r.successful() and (r.t < t1):
         update_sys(sys, r.t, t0)  # update transition mat phi
         #print "sys.F should be changing"
         #print sys.F
@@ -446,7 +367,13 @@ def reach_per_search(sys, evolve = False, y0 = []):
         # update sys
         r.set_f_params(sys.n, sys)
         r.integrate(r.t + dt)
+        if float(r.t) > float(t1)+sys.abs_tol:
+            print " r.t: " + str(r.t) + " t1: " + str(t1)
+            print "should exit now"
+            return tube #THIS IS CHEATING
         tube[:,i] = r.y
+        print "tube_prop_number: " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1)
+
         i += 1
         #print "iteration: " + str(i)
 
@@ -488,9 +415,9 @@ def reach_center(sys,evolve = False, y0=[]):
         #print y0
     else:
         y0 = np.reshape(sys.xc, (sys.n))
-    t0 = sys.t0
-    t1 = sys.t1
-    dt = sys.dt
+    t0 = float(sys.t0)
+    t1 = float(sys.t1)
+    dt = float(sys.dt)
 
     len_prop = sys.len_prop
     center_trajectory = np.zeros((sys.n, len_prop), dtype=np.float)
@@ -502,12 +429,23 @@ def reach_center(sys,evolve = False, y0=[]):
 
     i = 1
     print "starting from" + str(r.y)
-    while r.successful() and r.t <= t1:
+    print "buffer length: " + str(len_prop)
+    print "t0: " + str(t0)
+    print "t1: " + str(t1)
+    while r.successful() and (r.t < t1): #watch out for comparison error......
+
         #update_sys(sys, r.t, t0)  # update transition mat phi
         # update sys
         #r.set_f_params(sys.n, sys)
         r.integrate(r.t + dt)
+        print "going for number: " +str(i)
+        if float(r.t) > float(t1)+sys.abs_tol:
+        #    print " r.t: " + str(r.t) + " t1: " + str(t1)
+            print "should exit now"
+            return center_trajectory #THIS IS CHEATING
         center_trajectory[:,i] = r.y
+        print "center prop_num: " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1)
+
         #print "r.t" + str(r.t)
         i += 1
         #print r.y
@@ -541,7 +479,7 @@ def evolve_nodist(prev_reach_set,prev_center_trajectory,sys, extra_time):
     sys.t0 = sys.t1
     sys.t1 = sys.t1 + extra_time
     sys.dt = float(float(sys.t1 - sys.t0)) / 200
-    extra_len_prop = int(np.ceil(float((sys.t1 - sys.t0) / sys.dt))) + 2
+    extra_len_prop = int(np.ceil(float((sys.t1 - sys.t0) / sys.dt)))  +1 #1st element used by init set
 
 
 
@@ -549,11 +487,11 @@ def evolve_nodist(prev_reach_set,prev_center_trajectory,sys, extra_time):
     sys.len_prop = extra_len_prop
 
     print "prev_len_prop" + str(prev_len_prop)
-    print "extra_len_prop" + str(extra_len_prop)
+    print "extra_len_prop" + str(extra_len_prop) #should be 200....
     #print "DEBUG"
     #print prev_center_trajectory[:,-1]
 
-    evolved_center_trajectory = reach_center(sys,evolve = True, y0 = prev_center_trajectory[:,200])
+    evolved_center_trajectory = reach_center(sys,evolve = True, y0 = prev_center_trajectory[:,prev_len_prop-1])
 
     reach_set = np.empty((sys.n * sys.n, sys.len_prop, sys.num_search))
 
@@ -566,14 +504,14 @@ def evolve_nodist(prev_reach_set,prev_center_trajectory,sys, extra_time):
 
     for i in range(sys.num_search):
         sys.L0 = sys.L[i].T
-        tube = reach_per_search(sys, evolve= True, y0 = prev_reach_set[:,200,i])
+        tube = reach_per_search(sys, evolve= True, y0 = prev_reach_set[:,prev_len_prop-1,i])
         reach_set[:,:,i] = tube    #time_series x vectorized shape matrix x search direction
 
     #print prev_reach_set.shape
     #print reach_set.shape
 
-    combined_reach_set = np.concatenate((prev_reach_set[:,0:-2,:],reach_set),axis = 1)
-    combined_center_trajectory = np.concatenate((prev_center_trajectory[:,0:-2],evolved_center_trajectory),axis = 1)
+    combined_reach_set = np.concatenate((prev_reach_set[:,:,:],reach_set),axis = 1)
+    combined_center_trajectory = np.concatenate((prev_center_trajectory[:,:],evolved_center_trajectory),axis = 1)
     #print combined_set.shape
     sys.len_prop = prev_len_prop + extra_len_prop
 
@@ -614,49 +552,20 @@ def reach():
 
 
     #reach_gui(sys,center_trajectory,reach_set,render_length=sys.len_prop)
-    evolved_reach_set, evolved_center_trajectory = evolve_nodist(reach_set,center_trajectory,sys,extra_time=10)
+    evolved_reach_set, evolved_center_trajectory = evolve_nodist(reach_set,center_trajectory,sys,extra_time=5)
 
-    print sys.len_prop
-    reach_gui(sys,evolved_center_trajectory,evolved_reach_set[:,0:-2,:], render_length = 400)
-def ode_integrate():
-    #Ab = np.array([[-0.25, 0, 0],
-    #               [0.25, -0.2, 0],
-    #               [0, 0.2, -0.1]])
+    print  np.reshape(reach_set[:, 199, 0], (sys.n, sys.n))
+    print  np.reshape(evolved_reach_set[:, 199, 0], (sys.n, sys.n))
+    print  np.reshape(evolved_reach_set[:, 200, 0], (sys.n, sys.n))
+    print  np.reshape(evolved_reach_set[:, 201, 0], (sys.n, sys.n))
+    print  np.reshape(evolved_reach_set[:, 202, 0], (sys.n, sys.n))
+    print  np.reshape(evolved_reach_set[:, 401, 0], (sys.n, sys.n))
+    #print "EVOLVE AGAIN"
+    #evolve again!
+    #evolved_reach_set, evolved_center_trajectory = evolve_nodist(evolved_reach_set, evolved_center_trajectory, sys, extra_time=5)
 
-    Ab = np.array([[1, 0, 0],
-                   [0, 1, 0],
-                   [0, 0, 1]])
-    time = np.linspace(0, 25, 101)
-    #A0 = np.array([10, 20, 30])
-    Amat = np.random.randn(3, 3)
-    A0 = np.reshape(Amat, 3*3)
-
-    print "Amat"
-    print Amat
-    print A0
-    #rate = np.dot(Ab, A0)
-
-    #print "rate"
-    #print rate
-
-    t0=0
-    r = ode(deriv).set_integrator('dopri5')
-    r.set_initial_value(A0, t0).set_f_params(Ab)
-    t1 = 10
-    dt = 0.01
-    print "start"
-    print A0
-
-    while r.successful() and r.t < t1:
-        r.integrate(r.t + dt)
-        #print("%g %g" % (r.t, r.y))
-        #print r.t
-        #print "result"
-        #print r.y
-
-    print r.t
-    print "done"
-    print r.y
+    #print sys.len_prop
+    reach_gui(sys,evolved_center_trajectory,evolved_reach_set[:,:,:], render_length = sys.len_prop)
 def main():
     #v = np.random.randn(5,1)
     #x = np.random.randn(5,1)
