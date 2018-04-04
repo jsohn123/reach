@@ -198,7 +198,7 @@ def system_init_LC():
     sys.n = 2
     sys.abs_tol = 0.0001
     sys.t0 = 0.0
-    sys.t1 = 10
+    sys.t1 = 3.15
     sys.dt=float(float(sys.t1-sys.t0))/200
     #sys.dt = 0.001
     print "sys dt " + str(sys.dt)
@@ -210,7 +210,7 @@ def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set,r
 
     V = np.empty([3, 1])
     for t in range(render_length-1): #for each time prop
-        #print "t: " + str(t)
+        print "t: " + str(t)
 
 
         wheel_slice = np.zeros((2,num_spokes_per_slice), dtype=np.float)
@@ -350,7 +350,7 @@ def reach_per_search(sys, evolve = False, y0 = []):
     dt = sys.dt
 
     len_prop = sys.len_prop
-    #print "len_prop: " + str(len_prop)
+    print "len_prop: " + str(len_prop)
     tube = np.zeros((sys.n*sys.n, len_prop), dtype=np.float)
 
     r = ode(deriv_ea_nodist).set_integrator('dopri5')
@@ -359,7 +359,7 @@ def reach_per_search(sys, evolve = False, y0 = []):
     tube[:,0] = y0
 
     i = 1
-    while r.successful() and (r.t < t1):
+    while r.successful() and (r.t <= t1):
         update_sys(sys, r.t, t0)  # update transition mat phi
         #print "sys.F should be changing"
         #print sys.F
@@ -367,26 +367,20 @@ def reach_per_search(sys, evolve = False, y0 = []):
         # update sys
         r.set_f_params(sys.n, sys)
         r.integrate(r.t + dt)
-        if float(r.t) > float(t1)+sys.abs_tol:
+        try:
+            tube[:,i] = r.y
+        except:
+            print "tube[:,i] failed at " + str(i)
+        if float(r.t) >= float(t1)+sys.abs_tol:
             print " r.t: " + str(r.t) + " t1: " + str(t1)
             print "should exit now"
-            return tube #THIS IS CHEATING
-        tube[:,i] = r.y
+            try:
+                print tube[:,i]
+            except:
+                print "nothing!"
+            return tube
         print "tube_prop_number: " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1)
-
         i += 1
-        #print "iteration: " + str(i)
-
-        # print("%g %g" % (r.t, r.y))
-        # print r.t
-        # print "result"
-        # print np.reshape(r.y, (n, n))
-
-    # print r.t
-    #print "done"
-    # print r.y
-    #print np.reshape(r.y, (sys.n, sys.n))
-    #print np.reshape(tube[:,-1], (sys.n, sys.n))
     print "finished at " + str(r.t)
     return tube
 def deriv_reach_center(t,y,sys):
@@ -406,10 +400,6 @@ def deriv_reach_center(t,y,sys):
 def reach_center(sys,evolve = False, y0=[]):
     #center calculation here
 
-    #[tt, xx] = ell_ode_solver( @ ell_center_ode, tvals, x0, mydata, d1, back);
-
-    #y0 = np.reshape(sys.xc, (sys.n,1))  #nx1
-
     if evolve:
         print "evolving center from latest result"
         #print y0
@@ -420,7 +410,7 @@ def reach_center(sys,evolve = False, y0=[]):
     dt = float(sys.dt)
 
     len_prop = sys.len_prop
-    center_trajectory = np.zeros((sys.n, len_prop), dtype=np.float)
+    center_trajectory = np.zeros((sys.n, len_prop+1), dtype=np.float) #check this 04/03
 
     r = ode(deriv_reach_center).set_integrator('dopri5')
     r.set_initial_value(y0, t0).set_f_params(sys)
@@ -432,7 +422,7 @@ def reach_center(sys,evolve = False, y0=[]):
     print "buffer length: " + str(len_prop)
     print "t0: " + str(t0)
     print "t1: " + str(t1)
-    while r.successful() and (r.t < t1): #watch out for comparison error......
+    while r.successful() and (r.t <= t1): #watch out for comparison error......
 
         #update_sys(sys, r.t, t0)  # update transition mat phi
         # update sys
@@ -442,7 +432,7 @@ def reach_center(sys,evolve = False, y0=[]):
         if float(r.t) > float(t1)+sys.abs_tol:
         #    print " r.t: " + str(r.t) + " t1: " + str(t1)
             print "should exit now"
-            return center_trajectory #THIS IS CHEATING
+            return center_trajectory
         center_trajectory[:,i] = r.y
         print "center prop_num: " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1)
 
@@ -479,7 +469,7 @@ def evolve_nodist(prev_reach_set,prev_center_trajectory,sys, extra_time):
     sys.t0 = sys.t1
     sys.t1 = sys.t1 + extra_time
     sys.dt = float(float(sys.t1 - sys.t0)) / 200
-    extra_len_prop = int(np.ceil(float((sys.t1 - sys.t0) / sys.dt)))  +1 #1st element used by init set
+    extra_len_prop = int(np.ceil(float((sys.t1 - sys.t0) / sys.dt)))#+1 #1st element used by init set
 
 
 
@@ -491,7 +481,7 @@ def evolve_nodist(prev_reach_set,prev_center_trajectory,sys, extra_time):
     #print "DEBUG"
     #print prev_center_trajectory[:,-1]
 
-    evolved_center_trajectory = reach_center(sys,evolve = True, y0 = prev_center_trajectory[:,prev_len_prop-1])
+    evolved_center_trajectory = reach_center(sys,evolve = True, y0 = prev_center_trajectory[:,-1])
 
     reach_set = np.empty((sys.n * sys.n, sys.len_prop, sys.num_search))
 
@@ -504,9 +494,12 @@ def evolve_nodist(prev_reach_set,prev_center_trajectory,sys, extra_time):
 
     for i in range(sys.num_search):
         sys.L0 = sys.L[i].T
-        tube = reach_per_search(sys, evolve= True, y0 = prev_reach_set[:,prev_len_prop-1,i])
+        tube = reach_per_search(sys, evolve= True, y0 = prev_reach_set[:,-1,i])
         reach_set[:,:,i] = tube    #time_series x vectorized shape matrix x search direction
-
+        print "tube shape: " + str(tube.shape)
+        print reach_set.shape
+        print "last of tube: "
+        print tube[:,-1]
     #print prev_reach_set.shape
     #print reach_set.shape
 
@@ -535,7 +528,10 @@ def reach():
         sys.L0 = sys.L[i].T
         tube = reach_per_search(sys)
         reach_set[:,:,i] = tube    #time_series x vectorized shape matrix x search direction
-
+        print "tube shape: " + str(tube.shape)
+        print reach_set.shape
+        print "last of tube: "
+        print tube[:, -1]
     #inspect_slice(reach_set,sys)
 
 
@@ -552,18 +548,19 @@ def reach():
 
 
     #reach_gui(sys,center_trajectory,reach_set,render_length=sys.len_prop)
+    print "EVOLVE 1"
     evolved_reach_set, evolved_center_trajectory = evolve_nodist(reach_set,center_trajectory,sys,extra_time=5)
-
-    print  np.reshape(reach_set[:, 199, 0], (sys.n, sys.n))
-    print  np.reshape(evolved_reach_set[:, 199, 0], (sys.n, sys.n))
-    print  np.reshape(evolved_reach_set[:, 200, 0], (sys.n, sys.n))
-    print  np.reshape(evolved_reach_set[:, 201, 0], (sys.n, sys.n))
-    print  np.reshape(evolved_reach_set[:, 202, 0], (sys.n, sys.n))
-    print  np.reshape(evolved_reach_set[:, 401, 0], (sys.n, sys.n))
+#
+    #print evolved_reach_set.shape
+    #print evolved_reach_set[:, 202, 0]
+    #print evolved_reach_set[:,-1,0]
+    print evolved_reach_set[:, -2, 0]
     #print "EVOLVE AGAIN"
     #evolve again!
-    #evolved_reach_set, evolved_center_trajectory = evolve_nodist(evolved_reach_set, evolved_center_trajectory, sys, extra_time=5)
+    print "EVOLVE 2"
+    #evolved_reach_set, evolved_center_trajectory = evolve_nodist(evolved_reach_set, evolved_center_trajectory, sys, extra_time=6.5)
 
+    #print evolved_reach_set.shape
     #print sys.len_prop
     reach_gui(sys,evolved_center_trajectory,evolved_reach_set[:,:,:], render_length = sys.len_prop)
 def main():
