@@ -198,7 +198,7 @@ def system_init_LC():
     sys.n = 2
     sys.abs_tol = 0.0001
     sys.t0 = 0.0
-    sys.t1 = 3.15
+    sys.t1 = 10.00
     sys.dt=float(float(sys.t1-sys.t0))/200
     #sys.dt = 0.001
     print "sys dt " + str(sys.dt)
@@ -253,7 +253,7 @@ def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set,r
         #just finished wheel slice per time
 
         #create time stamp copies for slice points here [tt;X]
-        current_time = t*sys.dt
+        current_time = t*sys.dt #find correc dt here
 
         time_stamp = current_time*(np.ones(num_spokes_per_slice))
         #print "current time" + str(current_time)
@@ -468,7 +468,7 @@ def evolve_nodist(prev_reach_set,prev_center_trajectory,sys, extra_time):
     #sys.abs_tol = 0.0001
     sys.t0 = sys.t1
     sys.t1 = sys.t1 + extra_time
-    sys.dt = float(float(sys.t1 - sys.t0)) / 200
+    sys.dt = float(float(sys.t1 - sys.t0)) / 200 #CHANGES OUR VERTEX GENERATION SCALE.....
     extra_len_prop = int(np.ceil(float((sys.t1 - sys.t0) / sys.dt)))#+1 #1st element used by init set
 
 
@@ -549,7 +549,7 @@ def reach():
 
     #reach_gui(sys,center_trajectory,reach_set,render_length=sys.len_prop)
     print "EVOLVE 1"
-    evolved_reach_set, evolved_center_trajectory = evolve_nodist(reach_set,center_trajectory,sys,extra_time=5)
+    evolved_reach_set, evolved_center_trajectory = evolve_nodist(reach_set,center_trajectory,sys,extra_time=10)
 #
     #print evolved_reach_set.shape
     #print evolved_reach_set[:, 202, 0]
