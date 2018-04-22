@@ -8,6 +8,11 @@ from mpl_toolkits import mplot3d
 import time
 import pandas as pd
 import matplotlib.animation as animation
+import requests
+
+from datetime import datetime
+from elasticsearch import Elasticsearch
+
 
 
 conn = krpc.connect(name='Launch into orbit')
@@ -40,11 +45,32 @@ class flight_data():
         # Main ascent loop
         #srbs_separated = False
         #turn_angle = 0
-    def update_trajectory(self, lv_pos):
+        self._init_kibana_stream()
+
+    def _init_kibana_stream(self):
+        print "initiating datalog for flight!"
+
+        self.es = Elasticsearch(['http://localhost:9200'])
+
+
+
+    def update_trajectory(self, lv_pos, remaining_burn = 0):
         self.trajectory = np.vstack((self.trajectory, lv_pos))
 
+        doc = {
+            'flight': 'kerbin orbit',
+            'x': lv_pos[0],
+            'y': lv_pos[1],
+            'z': lv_pos[2],
+            'altitude':altitude(),
+            'srb_fuel':srb_fuel(),
+            'remaining_burn':remaining_burn,
+            'kerbin_timestamp': ut(),
+            'date':datetime.now()
+        }
 
-
+        self.es.index(index="flight_data", doc_type='tweet',body=doc)
+        self.es.indices.refresh(index="flight_data")
 
 def launch_init_sequence(flight_data):
     # Countdown...
@@ -143,36 +169,46 @@ def circularization(flight_data):
     print('Waiting until circularization burn')
     burn_ut = ut() + vessel.orbit.time_to_apoapsis - (burn_time / 2.)
     lead_time = 5
-    conn.space_center.warp_to(burn_ut - lead_time)
+    remaining_burn = conn.add_stream(node.remaining_burn_vector, node.reference_frame)
+    #conn.space_center.warp_to(burn_ut - lead_time)
 
     lv_pos = vessel.position(vessel.orbit.body.reference_frame)
-    flight_data.update_trajectory(lv_pos)
+    flight_data.update_trajectory(lv_pos, remaining_burn=remaining_burn()[1])
 
     # Execute burn
     print('Ready to execute burn')
     time_to_apoapsis = conn.add_stream(getattr, vessel.orbit, 'time_to_apoapsis')
     while time_to_apoapsis() - (burn_time / 2.) > 0:
         lv_pos = vessel.position(vessel.orbit.body.reference_frame)
-        flight_data.update_trajectory(lv_pos)
+        flight_data.update_trajectory(lv_pos, remaining_burn=remaining_burn()[1])
         time.sleep(0.5)
 
     print('Executing burn')
     vessel.control.throttle = 1.0
-    time.sleep(burn_time - 0.1)
+    #time.sleep(burn_time - 0.1)
+    total_burn = remaining_burn()[1]
+    while remaining_burn()[1] > total_burn*0.2:
+        flight_data.update_trajectory(lv_pos, remaining_burn=remaining_burn()[1])
+        time.sleep(0.1)
+        print remaining_burn()[1]
+
+
     print('Fine tuning')
     vessel.control.throttle = 0.05
-    remaining_burn = conn.add_stream(node.remaining_burn_vector, node.reference_frame)
+
     prev_burn_residual = remaining_burn()[1]
 
     while remaining_burn()[1] > 0.1:
         print remaining_burn()[1]
-        if prev_burn_residual > remaining_burn()[1]:
+        if prev_burn_residual < remaining_burn()[1]:
             #we missed crossing point
             print "shutting down, close enough"
             break
+        else:
+            prev_burn_residual = remaining_burn()[1]
 
         lv_pos = vessel.position(vessel.orbit.body.reference_frame)
-        flight_data.update_trajectory(lv_pos)
+        flight_data.update_trajectory(lv_pos, remaining_burn=remaining_burn()[1])
         time.sleep(0.5)
     vessel.control.rcs = False
     vessel.control.throttle = 0.0
