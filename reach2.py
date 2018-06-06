@@ -198,7 +198,7 @@ def system_init_LC():
     sys.n = 2
     sys.abs_tol = 0.0001
     sys.t0 = 0.0
-    sys.t1 = 10.00
+    sys.t1 = 3.00
     sys.dt=float(float(sys.t1-sys.t0))/200
     #sys.dt = 0.001
     print "sys dt " + str(sys.dt)
@@ -206,7 +206,7 @@ def system_init_LC():
     sys.len_prop = int(np.ceil(float((sys.t1 - sys.t0) / sys.dt))) +1 #1st element is used by y0
     return sys
 
-def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set,render_length):
+def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set,render_length,time_tube):
 
     V = np.empty([3, 1])
     for t in range(render_length-1): #for each time prop
@@ -253,8 +253,8 @@ def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set,r
         #just finished wheel slice per time
 
         #create time stamp copies for slice points here [tt;X]
-        current_time = t*sys.dt #find correc dt here
-
+        #current_time = t*sys.dt #find correc dt here
+        current_time = time_tube[t]
         time_stamp = current_time*(np.ones(num_spokes_per_slice))
         #print "current time" + str(current_time)
         #print "wheel_slice"
@@ -275,7 +275,7 @@ def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set,r
 
 
     return V
-def reach_gui(sys,center_trajectory, reach_set,render_length):
+def reach_gui(sys,center_trajectory, reach_set,render_length,time_tube):
     print "generating vertices and facets"
 
     num_spokes_per_slice = 200
@@ -287,7 +287,7 @@ def reach_gui(sys,center_trajectory, reach_set,render_length):
     #print unit_spokes
     #print phi*180/np.pi
 
-    vertices = reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set, render_length)
+    vertices = reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set, render_length,time_tube)
     #tube slice rendering vector numbers
     #sys.len_prop #time stamps
     F = triag_facets(num_spokes_per_slice, sys.len_prop)
@@ -351,12 +351,14 @@ def reach_per_search(sys, evolve = False, y0 = []):
 
     len_prop = sys.len_prop
     print "len_prop: " + str(len_prop)
-    tube = np.zeros((sys.n*sys.n, len_prop), dtype=np.float)
+    tube = np.zeros((sys.n*sys.n,len_prop), dtype=np.float)
+    time_tube = np.zeros(len_prop,dtype=np.float)
 
     r = ode(deriv_ea_nodist).set_integrator('dopri5')
     r.set_initial_value(y0, t0).set_f_params(sys.n)
 
     tube[:,0] = y0
+    time_tube[0] = t0
 
     i = 1
     while r.successful() and (r.t <= t1):
@@ -369,6 +371,7 @@ def reach_per_search(sys, evolve = False, y0 = []):
         r.integrate(r.t + dt)
         try:
             tube[:,i] = r.y
+            time_tube[i] = r.t
         except:
             print "tube[:,i] failed at " + str(i)
         if float(r.t) >= float(t1)+sys.abs_tol:
@@ -378,11 +381,11 @@ def reach_per_search(sys, evolve = False, y0 = []):
                 print tube[:,i]
             except:
                 print "nothing!"
-            return tube
+            return tube,time_tube
         print "tube_prop_number: " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1)
         i += 1
     print "finished at " + str(r.t)
-    return tube
+    return tube, time_tube
 def deriv_reach_center(t,y,sys):
     x = y #in vector form
     #print x
@@ -460,8 +463,8 @@ def inspect_slice(reach_set,sys):
         print sys.L[i].T
         print reach_set[:, 171, i]
 
-def evolve_nodist(prev_reach_set,prev_center_trajectory,sys, extra_time):
-    switch_system(sys) #only update system matrix, not
+def evolve_nodist(prev_reach_set,time_tube,prev_center_trajectory,sys, extra_time):
+    #switch_system(sys) #only update system matrix, not
 
     #sys.num_search = 2
     #sys.n = 2
@@ -481,7 +484,7 @@ def evolve_nodist(prev_reach_set,prev_center_trajectory,sys, extra_time):
     #print "DEBUG"
     #print prev_center_trajectory[:,-1]
 
-    evolved_center_trajectory = reach_center(sys,evolve = True, y0 = prev_center_trajectory[:,-1])
+    evolved_center_trajectory = reach_center(sys,evolve = True, y0 = prev_center_trajectory[:,prev_len_prop-1]) #-1
 
     reach_set = np.empty((sys.n * sys.n, sys.len_prop, sys.num_search))
 
@@ -494,7 +497,7 @@ def evolve_nodist(prev_reach_set,prev_center_trajectory,sys, extra_time):
 
     for i in range(sys.num_search):
         sys.L0 = sys.L[i].T
-        tube = reach_per_search(sys, evolve= True, y0 = prev_reach_set[:,-1,i])
+        tube, extra_time_tube = reach_per_search(sys, evolve= True, y0 = prev_reach_set[:,prev_len_prop-1,i]) #-1
         reach_set[:,:,i] = tube    #time_series x vectorized shape matrix x search direction
         print "tube shape: " + str(tube.shape)
         print reach_set.shape
@@ -503,12 +506,14 @@ def evolve_nodist(prev_reach_set,prev_center_trajectory,sys, extra_time):
     #print prev_reach_set.shape
     #print reach_set.shape
 
-    combined_reach_set = np.concatenate((prev_reach_set[:,:,:],reach_set),axis = 1)
-    combined_center_trajectory = np.concatenate((prev_center_trajectory[:,:],evolved_center_trajectory),axis = 1)
+    combined_reach_set = np.concatenate((prev_reach_set[:,:,:prev_len_prop-1],reach_set),axis = 1)
+    combined_center_trajectory = np.concatenate((prev_center_trajectory[:,:prev_len_prop-1],evolved_center_trajectory),axis = 1)
     #print combined_set.shape
     sys.len_prop = prev_len_prop + extra_len_prop
 
-    return combined_reach_set, combined_center_trajectory
+    combined_time_tube = np.append(time_tube[:prev_len_prop-1],extra_time_tube)
+
+    return combined_reach_set, combined_center_trajectory, combined_time_tube
 
 def reach():
     sys = system_init_LC()
@@ -521,12 +526,13 @@ def reach():
     print center_trajectory[:,1]
     print "done center traj calculation"
 
-    reach_set =np.empty((sys.n*sys.n, sys.len_prop, sys.num_search))
+    reach_set =np.empty((sys.n*sys.n,sys.len_prop, sys.num_search))
+    time_tube=[]
     #initialize the shape matrix tube
 
     for i in range(sys.num_search):
         sys.L0 = sys.L[i].T
-        tube = reach_per_search(sys)
+        tube,time_tube = reach_per_search(sys)
         reach_set[:,:,i] = tube    #time_series x vectorized shape matrix x search direction
         print "tube shape: " + str(tube.shape)
         print reach_set.shape
@@ -547,22 +553,22 @@ def reach():
     #print np.reshape(reach_set[:,170, 1], (sys.n, sys.n))
 
 
-    #reach_gui(sys,center_trajectory,reach_set,render_length=sys.len_prop)
-    print "EVOLVE 1"
-    evolved_reach_set, evolved_center_trajectory = evolve_nodist(reach_set,center_trajectory,sys,extra_time=10)
+    #reach_gui(sys,center_trajectory,reach_set,render_length=sys.len_prop,time_tube = time_tube)
+    #print "EVOLVE 1"
+    evolved_reach_set, evolved_center_trajectory, evolved_time_tube = evolve_nodist(reach_set,time_tube,center_trajectory,sys,extra_time=10)
+##
+    ##print evolved_reach_set.shape
+    ##print evolved_reach_set[:, 202, 0]
+    ##print evolved_reach_set[:,-1,0]
+    #print evolved_reach_set[:, -2, 0]
+    ##print "EVOLVE AGAIN"
+    ##evolve again!
+    #print "EVOLVE 2"
+    evolved_reach_set, evolved_center_trajectory,evolved_time_tube = evolve_nodist(evolved_reach_set,evolved_time_tube, evolved_center_trajectory, sys, extra_time=3)
 #
-    #print evolved_reach_set.shape
-    #print evolved_reach_set[:, 202, 0]
-    #print evolved_reach_set[:,-1,0]
-    print evolved_reach_set[:, -2, 0]
-    #print "EVOLVE AGAIN"
-    #evolve again!
-    print "EVOLVE 2"
-    #evolved_reach_set, evolved_center_trajectory = evolve_nodist(evolved_reach_set, evolved_center_trajectory, sys, extra_time=6.5)
-
-    #print evolved_reach_set.shape
-    #print sys.len_prop
-    reach_gui(sys,evolved_center_trajectory,evolved_reach_set[:,:,:], render_length = sys.len_prop)
+    ##print evolved_reach_set.shape
+    ##print sys.len_prop
+    reach_gui(sys,evolved_center_trajectory,evolved_reach_set[:,:,:], render_length = sys.len_prop,time_tube = evolved_time_tube)
 def main():
     #v = np.random.randn(5,1)
     #x = np.random.randn(5,1)
