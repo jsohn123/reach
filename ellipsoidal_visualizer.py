@@ -63,8 +63,14 @@ def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set,r
                 #INVERSION IS HAPPENING DUE TO DEFINITION OF ELLIPSOID USING SHAPE MATRIX
 
                 Q = np.reshape(reach_set[:, t, ellipsoid_index], (sys.n, sys.n))
-                Q = np.linalg.inv(Q)
-                Q = Q.T
+                try:
+                    Q = np.linalg.inv(Q)
+                    Q = Q.T
+                except Exception as e:
+                    print Q
+                    print e
+                    #Q = np.eye(sys.n)
+
 
                 #try:
                 #    Q = np.reshape(reach_set[:, t, ellipsoid_index], (sys.n, sys.n))

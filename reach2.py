@@ -38,7 +38,7 @@ def switch_system(sys):
 
     sys.BPB = np.linalg.multi_dot([sys.B, sys.P, sys.B.T])
 
-def system_init_LC():
+def system_init_LC(t_end):
 
     #setup target system model here
     sys = System()
@@ -69,8 +69,8 @@ def system_init_LC():
     sys.num_search = 2
     sys.n = 2
     sys.abs_tol = 0.0001
-    sys.t0 = 0.0
-    sys.t1 = 5.00
+    sys.t0 = 0.00
+    sys.t1 = t_end
 
     sys.time_grid_size = 200
     sys.time_grid, sys.dt= np.linspace(sys.t0,sys.t1,sys.time_grid_size,dtype=float,retstep=True)
@@ -80,7 +80,6 @@ def system_init_LC():
 
 def reach_center(sys,evolve = False, y0=[], debug =False):
     #center calculation here
-
     if evolve:
         print "evolving center from latest result"
         #print y0
@@ -91,7 +90,7 @@ def reach_center(sys,evolve = False, y0=[], debug =False):
     dt = float(sys.dt)
 
     len_prop = sys.len_prop
-    center_trajectory = np.zeros((sys.n, len_prop+1), dtype=np.float) #check this 04/03
+    center_trajectory = np.zeros((sys.n, len_prop), dtype=np.float)
 
     r = ode(deriv_reach_center).set_integrator('dopri5')
     r.set_initial_value(y0, t0).set_f_params(sys)
@@ -105,23 +104,17 @@ def reach_center(sys,evolve = False, y0=[], debug =False):
         print "t0: " + str(t0)
         print "t1: " + str(t1)
     while r.successful() and (r.t <= t1): #watch out for comparison error......
-
-        #update_sys(sys, r.t, t0)  # update transition mat phi
-        # update sys
-        #r.set_f_params(sys.n, sys)
         r.integrate(r.t + dt)
-        if debug:
-            print "going for number: " +str(i)
-        if float(r.t) > float(t1)+sys.abs_tol:
-        #    print " r.t: " + str(r.t) + " t1: " + str(t1)
-            if debug:
-                print "should exit now"
-            return center_trajectory
-        center_trajectory[:,i] = r.y
-        if debug:
-            print "center prop_num: " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1)
-        i += 1
 
+        try:
+            center_trajectory[:,i] = r.y
+        except Exception as e:
+            if debug:
+                print e
+            print "trajectory_center[:,i] exited at " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1) + " dt: " + str(dt)
+            return center_trajectory
+        i += 1
+    print "trajectory_center[:,i] exited at " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1) + " dt: " + str(dt)
     return center_trajectory
 def deriv_reach_center(t,y,sys):
     x = y #in vector form
@@ -291,7 +284,7 @@ def inspect_slice(reach_set,sys):
 
 def reach():
     debug = False
-    sys = system_init_LC() #SETUP DYNAMIC SYSTEM DESCRIPTION HERE
+    sys = system_init_LC(t_end = 5.00) #SETUP DYNAMIC SYSTEM DESCRIPTION HERE
 
     print "starting center traj calculation"
     center_trajectory = reach_center(sys)
@@ -318,6 +311,7 @@ def reach():
     evolved_reach_set, evolved_center_trajectory,evolved_time_tube = evolve_nodist(evolved_reach_set,evolved_time_tube, evolved_center_trajectory, sys, extra_time=3)
 #
     ev.reach_gui(sys,evolved_center_trajectory,evolved_reach_set[:,:,:], render_length = sys.len_prop,time_tube = evolved_time_tube)
+
 def main():
     #v = np.random.randn(5,1)
     #x = np.random.randn(5,1)
