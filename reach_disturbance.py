@@ -59,7 +59,7 @@ def system_init(t_end):
 
     A = np.array([[0.000], [-10.00],
                   [2.0000], [-8.000],
-                  ], dtype='Float32')
+                  ], dtype='Float64')
     sys.A = np.reshape(A, (2, 2))  # packed in matrix form
     B = np.array([[10, 0],
                   [0, 2],
@@ -437,11 +437,11 @@ def deriv_ia_nodist(t,y,n,sys):
 
     #xl0 = np.asmatrix(np.linalg.multi_dot([sys.M,sys.L0])).T
     #print "before update: " +str(sys.F)
-    #sys.F = linalg.expm((sys.A) * abs((t - sys.t0)))
+    sys.F = linalg.expm((sys.A) * abs((t - sys.t0)))
     #print "after update: " + str(sys.F)
     #F = np.linalg.inv(sys.F)
-    inv_F = np.linalg.inv(sys.F)  # verify THIS PROBABLY SINCE ADJOINT EQUATION IS -A
-    F = np.linalg.inv(inv_F*sys.F)*inv_F
+    F = np.linalg.inv(sys.F)  # verify THIS PROBABLY SINCE ADJOINT EQUATION IS -A
+    #F = np.linalg.inv(inv_F*sys.F)*inv_F
 
     #from ell_inv
     #B = inv(A);
@@ -466,15 +466,18 @@ def deriv_ia_nodist(t,y,n,sys):
         #print "pre-SVD"
         #print xl0
         #print l.T
-
         #S = ell_valign(l, xl0)
-        S = ell_valign(xl0, l)
+        S = np.reshape(np.asmatrix(ell_valign(xl0, l)),(sys.n,sys.n), order='F')
+
 
     #dxdt_mat = np.asmatrix(np.dot(X, A.T))
     #dxdt_mat = np.asmatrix(np.dot(A,X))
     #dxdt_mat = np.matmul(A, X)
     #dxdt_mat = np.dot(X, A.T) + np.dot(S, BPBsr)
     dxdt_mat = np.asmatrix(np.linalg.multi_dot([X, A.T]))+np.asmatrix(np.linalg.multi_dot([S, BPBsr]))
+    #dxdt_mat = np.asmatrix(np.linalg.multi_dot([X, A.T])) + BPBsr
+
+    #dxdt_mat = np.asmatrix(np.linalg.multi_dot([X, A.T])) + BPBsr
 
     dxdt = np.reshape(dxdt_mat,(sys.n*sys.n), order='F')
 
@@ -487,9 +490,9 @@ def deriv_ia_nodist(t,y,n,sys):
     print "A: " + str(A)
     print "X*A.T: " + str(np.dot(X, A.T))
 
-    #print "l.T: " + str(l.T)
-    #print "BPBsr: " + str(BPBsr)
-    #print "S*BPBsr: " + str(np.linalg.multi_dot([S,BPBsr]))
+    print "l: " + str(l)
+    print "BPBsr: " + str(BPBsr)
+    print "S*BPBsr: " + str(np.linalg.multi_dot([S,BPBsr]))
     print "S: " + str(S)
     print "xl0: " + str(xl0)
     print "L: " + str(L)
@@ -558,7 +561,6 @@ def inspect_slice(reach_set,sys):
 def reach():
     debug = False
     sys = system_init(t_end = 0.5) #SETUP DYNAMIC SYSTEM DESCRIPTION HERE
-
     print "starting center traj calculation"
     center_trajectory = reach_center(sys)
     print "done center traj calculation"
