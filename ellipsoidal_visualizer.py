@@ -39,7 +39,7 @@ def triag_facets(epoints_num, points_num):
     facets[:, i] = np.hstack((a[:,i],b[:,i],c[:,i],d[:,i]))
 
   return facets
-def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set,render_length,time_tube,debug = False):
+def EA_reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set,render_length,time_tube,debug = False):
 
     V = np.empty([3, 1])
     for t in range(render_length-1): #for each time prop
@@ -115,13 +115,99 @@ def reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set,r
 
 
     return V
-def reach_gui(sys,center_trajectory, reach_set,render_length,time_tube,debug = False):
+
+
+def IA_reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set,render_length,time_tube,debug = False):
+
+    V = np.empty([3, 1])
+    for t in range(render_length-1): #for each time prop
+        if debug:
+            print "t: " + str(t)
+
+
+        wheel_slice = np.zeros((2,num_spokes_per_slice), dtype=np.float)
+        for spoke_index in range(num_spokes_per_slice):
+
+            #print spoke_index
+            spoke = np.asmatrix(unit_spokes[:,spoke_index]).T
+            mval = sys.abs_tol #initializing spoke length max value search
+
+
+            mQ = None
+            for ellipsoid_index in range(sys.num_search):
+                #print "ellipsoidal_index: " + str(ellipsoid_index)
+
+                #max spoke radius search (EA)
+                #print np.reshape(reach_set[:,4, 1], (sys.n, sys.n))
+
+                #INVERSION IS HAPPENING DUE TO DEFINITION OF ELLIPSOID USING SHAPE MATRIX
+
+                Q = np.reshape(reach_set[:, t, ellipsoid_index], (sys.n, sys.n))
+                try:
+                    #Q = np.linalg.inv(Q)
+                    Q = Q.T
+                    if mQ is None:
+                        mQ = Q;
+                except Exception as e:
+                    print Q
+                    print e
+                    #Q = np.eye(sys.n)
+
+
+
+                v = np.linalg.multi_dot([spoke.T, Q, spoke])
+                if v > mval:
+                    mval = v
+                    mQ = Q;
+
+            #finished getting max reach of this spoke
+            #print "mQ: " + str(mQ)
+            #print "spoke : " + str(spoke)
+
+            adjusted_spoke = mQ*(spoke)/np.sqrt(mval)  #must make sure mval is set to abstol or else divide by 0
+            #print "adj_spoke: " + str(adjusted_spoke)
+            #print "center_traj: " + str(np.asmatrix(center_trajectory[:,t]).T)
+            #print "wheel_slice: " + str(wheel_slice[:,spoke_index])
+            #add center trajectory here
+            wheel_slice[:,spoke_index] = adjusted_spoke.T + np.asmatrix(center_trajectory[:,t])
+        #just finished wheel slice per time
+
+        #create time stamp copies for slice points here [tt;X]
+        #current_time = t*sys.dt #find correc dt here
+        current_time = time_tube[t]
+        time_stamp = current_time*(np.ones(num_spokes_per_slice))
+        #print "current time" + str(current_time)
+        #print "wheel_slice"
+        #print wheel_slice
+
+
+        X = np.vstack((time_stamp, wheel_slice))
+
+        #print X
+        V = np.hstack((V,X))
+        #print V
+
+        #pdb.set_trace()
+        #tt = rs.time_values(ii) * ones(1, num_spokes_per_slice);
+        #    X = [tt; X];
+        #    V = [V X];
+
+
+
+    return V
+def reach_gui(sys,center_trajectory, reach_set,render_length,time_tube,reach_type = "EA",debug = False):
     print "generating vertices and facets"
 
     num_spokes_per_slice = 200
     phi = np.linspace(0,2*np.pi,num_spokes_per_slice)
     unit_spokes = np.array([np.cos(phi),np.sin(phi)])
-    vertices = reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set, render_length,time_tube)
+
+    if reach_type == "EA":
+        vertices = EA_reach_vtx(sys,num_spokes_per_slice,unit_spokes,center_trajectory,reach_set, render_length,time_tube)
+    else:
+        vertices = IA_reach_vtx(sys, num_spokes_per_slice, unit_spokes, center_trajectory, reach_set, render_length,
+                                time_tube)
+
     #tube slice rendering vector numbers
     #sys.len_prop #time stamps
     F = triag_facets(num_spokes_per_slice, sys.len_prop)

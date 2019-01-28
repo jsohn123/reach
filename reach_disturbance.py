@@ -438,10 +438,7 @@ def deriv_ia_nodist(t,y,n,sys):
     #xl0 = np.asmatrix(np.linalg.multi_dot([sys.M,sys.L0])).T
     #print "before update: " +str(sys.F)
     sys.F = linalg.expm((sys.A) * abs((t - sys.t0)))
-    #print "after update: " + str(sys.F)
-    #F = np.linalg.inv(sys.F)
     F = np.linalg.inv(sys.F)  # verify THIS PROBABLY SINCE ADJOINT EQUATION IS -A
-    #F = np.linalg.inv(inv_F*sys.F)*inv_F
 
     #from ell_inv
     #B = inv(A);
@@ -462,41 +459,28 @@ def deriv_ia_nodist(t,y,n,sys):
         print "linalg.norm(l) < sys.abs_tol"
     else:
         print "linalg.norm(l) > sys.abs_tol"
-        l = np.asmatrix(l)#np.matrix('10; 0')
-        #print "pre-SVD"
-        #print xl0
-        #print l.T
-        #S = ell_valign(l, xl0)
+        l = np.asmatrix(l)
+
         S = np.reshape(np.asmatrix(ell_valign(xl0, l)),(sys.n,sys.n), order='F')
 
-
-    #dxdt_mat = np.asmatrix(np.dot(X, A.T))
-    #dxdt_mat = np.asmatrix(np.dot(A,X))
-    #dxdt_mat = np.matmul(A, X)
-    #dxdt_mat = np.dot(X, A.T) + np.dot(S, BPBsr)
     dxdt_mat = np.asmatrix(np.linalg.multi_dot([X, A.T]))+np.asmatrix(np.linalg.multi_dot([S, BPBsr]))
-    #dxdt_mat = np.asmatrix(np.linalg.multi_dot([X, A.T])) + BPBsr
-
-    #dxdt_mat = np.asmatrix(np.linalg.multi_dot([X, A.T])) + BPBsr
 
     dxdt = np.reshape(dxdt_mat,(sys.n*sys.n), order='F')
 
-    #dxdt = np.reshape(0.5*(dxdt_mat+dxdt_mat.T),sys.n*sys.n,1)
-
-    print "t: " + str(t)
-    print "y: " + str(y)
-    print "X:" + str(X)
-    #print "F: " + str(F)
-    print "A: " + str(A)
-    print "X*A.T: " + str(np.dot(X, A.T))
-
-    print "l: " + str(l)
-    print "BPBsr: " + str(BPBsr)
-    print "S*BPBsr: " + str(np.linalg.multi_dot([S,BPBsr]))
-    print "S: " + str(S)
-    print "xl0: " + str(xl0)
-    print "L: " + str(L)
-    print dxdt
+    #print "t: " + str(t)
+    #print "y: " + str(y)
+    #print "X:" + str(X)
+   #
+    #print "A: " + str(A)
+    #print "X*A.T: " + str(np.dot(X, A.T))
+#
+    #print "l: " + str(l)
+    #print "BPBsr: " + str(BPBsr)
+    #print "S*BPBsr: " + str(np.linalg.multi_dot([S,BPBsr]))
+    #print "S: " + str(S)
+    #print "xl0: " + str(xl0)
+    #print "L: " + str(L)
+    #print dxdt
 
     return dxdt
 
@@ -560,7 +544,7 @@ def inspect_slice(reach_set,sys):
 
 def reach():
     debug = False
-    sys = system_init(t_end = 0.5) #SETUP DYNAMIC SYSTEM DESCRIPTION HERE
+    sys = system_init(t_end = 5) #SETUP DYNAMIC SYSTEM DESCRIPTION HERE
     print "starting center traj calculation"
     center_trajectory = reach_center(sys)
     print "done center traj calculation"
@@ -572,10 +556,6 @@ def reach():
     for i in range(sys.num_search):
         sys.L0 = sys.L[i].T
 
-        #sys.L0 = sys.L[i].T
-        #sys.L0 = np.reshape(sys.L0, (1, sys.n))  # packed in matrix form
-
-        #EA_tube,time_tube = EA_reach_per_search(sys)
         print "sys.L0: " +str(sys.L0)
         sys.xl0 = np.asmatrix(np.linalg.multi_dot([sys.M,sys.L0])).T
         print "sys.xl0: " + str(sys.xl0)
@@ -592,8 +572,11 @@ def reach():
             #print "last of tube: "
             #print EA_tube[:, -1]
     #inspect_slice(reach_set,sys)
-    ev.reach_gui(sys,center_trajectory,IA_reach_set,render_length=sys.len_prop,time_tube=time_tube)
-    #ev.reach_gui(sys,center_trajectory,EA_reach_set,render_length=sys.len_prop,time_tube=time_tube)
+
+
+    #this ev.reach_gui needs to be ported for IA.
+    ev.reach_gui(sys,center_trajectory,IA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="IA")
+    #ev.reach_gui(sys,center_trajectory,EA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="EA")
 
     #print "EVOLVE 1"
     #evolved_reach_set, evolved_center_trajectory, evolved_time_tube = EA_evolve_nodist(reach_set,time_tube,center_trajectory,sys,extra_time=4)
