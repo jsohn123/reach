@@ -2,8 +2,8 @@ import numpy as np
 from scipy.integrate import ode
 from scipy import linalg
 import sys
-import ellipsoidal_visualizer as ev
-from src.ell_input_data import System
+import src.ellipsoidal_visualizer as ev
+from src.ell_input_data import EllSystem
 
 
 def reach_center(sys,evolve = False, y0=[], debug =False):
@@ -59,28 +59,35 @@ def deriv_reach_center(t,y,sys):
     #print "dxdt" +str(dxdt)
     return np.reshape(dxdt,(sys.n,1))
 
-def EA_reach_per_search(sys, evolve = False, y0 = [],debug = False):
+def EA_reach_per_search(sys, evolve = False, y0 = [],debug =False):
     #returns timeseries evolution of reachable set per direction of search vector from L0
 
     if evolve:
         print ("evolving from latest tube result")
     else:
-        y0 = np.reshape(sys.X0, sys.n * sys.n) #3*3
+        y0 = np.reshape(sys.X0,(sys.n*sys.n),1).T
 
     t0 = sys.t0
     t1 = sys.t1
     dt = sys.dt
 
+
+
     len_prop = sys.len_prop
     if debug:
+        print(y0)
+        print(np.reshape(sys.X0,(sys.n*sys.n),order='F'))
+        #print(np.reshape(sys.M, (sys.n * sys.n)))
         print ("len_prop: " + str(len_prop))
+
     tube = np.zeros((sys.n*sys.n,len_prop), dtype=np.float)
     time_tube = np.zeros(len_prop,dtype=np.float)
 
-    r = ode(deriv_ea_nodist).set_integrator('dopri5')
+    r = ode(deriv_ea_nodist).set_integrator('vode', atol=1e-13, rtol=1e-13)
     r.set_initial_value(y0, t0).set_f_params(sys.n)
 
-    tube[:,0] = y0
+    tube[:,0] = np.reshape(y0, (sys.n* sys.n))
+
     time_tube[0] = t0
 
     if debug:
@@ -97,24 +104,19 @@ def EA_reach_per_search(sys, evolve = False, y0 = [],debug = False):
         r.set_f_params(sys.n, sys)
         r.integrate(r.t + dt)
 
+        if debug:
+            print("r.y")
+            print(r.y)
         try:
             #append tube
-            tube[:,i] = r.y
+            tube[:,i] = np.reshape(r.y, sys.n * sys.n)
             time_tube[i] = r.t
         except Exception as e:
             if debug:
                 print(e)
                 print("tube[:,i] exited at " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1) + " dt: " + str(dt))
             return tube, time_tube
-        #if float(r.t) >= float(t1)+sys.abs_tol:
-        #    if debug:
-        #        print " r.t: " + str(r.t) + " t1: " + str(t1)
-        #        print "should exit now"
-        #        try:
-        #            print tube[:,i]
-        #        except:
-        #            print "nothing!"
-        #    return tube,time_tube
+
         if debug:
             print ("tube_prop_number: " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1))
         i += 1
@@ -122,9 +124,9 @@ def EA_reach_per_search(sys, evolve = False, y0 = [],debug = False):
         print ("finished at " + str(r.t))
     return tube, time_tube
 def deriv_ea_nodist(t,y,n,sys):
+    #X = np.reshape(y, (n, n)) #back to matrix
+    X = np.reshape(y, (n, n), order='F')
 
-    # "received" + str(y)
-    X = np.reshape(y, (n, n)) #back to matrix
     A = sys.A
     #F = sys.F #gives complete bogus
     F = np.linalg.inv(sys.F) #verify THIS PROBABLY SINCE ADJOINT EQUATION IS -A
@@ -140,56 +142,47 @@ def deriv_ea_nodist(t,y,n,sys):
     if abs(p2) < sys.abs_tol:
         p2 = sys.abs_tol
 
+    pp1 = (p1/p2).item()
 
-    pp1 = p1/p2
+    pp2 = (p2/p1).item()
 
-    pp2 = p2/p1
+    dxdt = np.dot(A,X) + np.dot(X,A.T)+pp1*X + pp2*BPB
 
-    dxdt = np.dot(A,X) + np.dot(X,A.T) + pp1*X + pp2*BPB
-
-    #dxdt = np.reshape(dxdt,n*n,1)
-    dxdt = np.reshape(0.5*(dxdt+dxdt.T),n*n,1)
-
+    dxdt = np.reshape(0.5*(dxdt+dxdt.T), (sys.n * sys.n),order='F')
 
     return dxdt
 
-def ell_valign(v,x):
-
+def ell_valign(vec_v, vec_x):
+    """ produces mapping matrix that aligns vector X to vector V"""
     #check for dimension, raise error
-
-    U1, s1, V1 = np.linalg.svd(v,full_matrices=True)
-    U2, s2, V2 = np.linalg.svd(x,full_matrices=True)
+    vec_v_left_rotation, vec_v_stretch, vec_v_right_rotation = np.linalg.svd(vec_v, full_matrices=True)
+    vec_x_left_rotation, vec_x_stretch, vec_x_right_rotation = np.linalg.svd(vec_x, full_matrices=True)
     #has to be full SVD
 
-
     #sketch way of dealing with scalars
-    if U1.shape[0] == 1 and U1.shape[1] ==1:
-        U1 = np.asscalar(U1)
-    if U2.shape[0] == 1 and U2.shape[1] == 1:
-        U2_T = np.asscalar(U2)
+    if vec_v_left_rotation.shape[0] == 1 and vec_v_left_rotation.shape[1] == 1:
+        vec_v_left_rotation = vec_v_left_rotation.item()
+    if vec_x_left_rotation.shape[0] == 1 and vec_x_left_rotation.shape[1] == 1:
+        vec_x_left_rotationtranspose = vec_x_left_rotation.item()
     else:
-        U2_T = U2.T
-    if V1.shape[0]== 1 and V1.shape[1] == 1:
-        V1 = np.asscalar(V1)
-    if V2.shape[0] == 1 and V2.shape[1] ==1:
-        V2_T = np.asscalar(V2)
+        vec_x_left_rotationtranspose = vec_x_left_rotation.T
+    if vec_v_right_rotation.shape[0] == 1 and vec_v_right_rotation.shape[1] == 1:
+        vec_v_right_rotation = vec_v_right_rotation.item()
+    if vec_x_right_rotation.shape[0] == 1 and vec_x_right_rotation.shape[1] == 1:
+        vec_x_right_rotationtranspose = vec_x_right_rotation.item()
     else:
-        V2_T = V2.T
+        vec_x_right_rotationtranspose = vec_x_right_rotation.T
+#
+    mapping_matrix_s = vec_v_left_rotation*vec_v_right_rotation*vec_x_right_rotationtranspose*vec_x_left_rotationtranspose
 
-    T = U1*V1*V2_T*U2_T
-
-
-    #T = np.linalg.multi_dot([U1, V1, V2.T, U2.T])
-
-    return T
+    return mapping_matrix_s
 
 def IA_reach_per_search(sys,evolve = False, y0 = [],debug = False):
-    debug = True
+
     if evolve:
         print ("evolving from latest tube result")
     else:
-        #y0 = np.reshape(sys.X0, sys.n * sys.n)  # 3*3
-        y0 = np.reshape(sys.M, (sys.n * sys.n), order='F')  # 3*3 #starting with half!
+        y0 = np.reshape(sys.M, (sys.n * sys.n), 1).T
 
     t0 = sys.t0
     t1 = sys.t1
@@ -199,21 +192,15 @@ def IA_reach_per_search(sys,evolve = False, y0 = [],debug = False):
     if debug:
         print ("len_prop: " + str(len_prop))
 
-    #tube = np.zeros((sys.n * sys.n, len_prop), dtype=np.float)
-    tube = np.zeros((sys.n * sys.n, len_prop), dtype='Float64')
-    time_tube = np.zeros(len_prop, dtype=np.float)
+    tube = np.zeros((sys.n * sys.n, len_prop))
+    time_tube = np.zeros(len_prop)
 
-    #
     # r = ode(deriv_ia_nodist).set_integrator('dop853',atol=1e-13,rtol=1e-13) #'dopri5'
     r = ode(deriv_ia_nodist).set_integrator('vode', atol=1e-13, rtol=1e-13)
-
     r.set_initial_value(y0, t0).set_f_params(sys.n)
 
-
-    #tube[:, 0] = np.squeeze(y0)
-
     Q = np.reshape(y0, (sys.n, sys.n))
-    tube[:, 0] = np.reshape(np.dot(Q, Q.T), (sys.n * sys.n), order='F')
+    tube[:, 0] = np.reshape(np.dot(Q, Q.T), (sys.n * sys.n))#, order='F')
     time_tube[0] = t0
 
     if debug:
@@ -223,50 +210,18 @@ def IA_reach_per_search(sys,evolve = False, y0 = [],debug = False):
         print ("END")
     i = 1
     while r.successful() and (r.t <= t1):
-        print ("starting loop with: " + str(r.t))
         # update_sys(sys, r.t, t0)  # update transition mat phi
         sys.F = linalg.expm((sys.A) * abs((r.t - t0)))
-        print ("sys.F: " + str(sys.F))
         # update sys
         r.set_f_params(sys.n, sys)
         r.integrate(r.t + dt)
-        print ("CHECK DXDT HERE")
         try:
-            # append tube
-            #ADDING FIX IESM
-            #Q = fix_iesm(Q', d1);
-            #Q' * Q
-
-            #
-            #Q*Q'
-            ##np.squeeze(r.y)
-            print ("CHECK r.y: " + str(r.y))
-            print ("CHECK squeeeze(r.y): " + str(np.squeeze(r.y)))
-
             #FIX IESM HERE
             #FIX_IESM - returns values for (Q' * Q).
             Q = np.reshape(r.y, (sys.n, sys.n))
-            wrong_vec_q_alt = np.reshape(np.dot(Q.T, Q), sys.n * sys.n, order='F')
-
-            vec_q = np.reshape(np.dot(Q,Q.T), sys.n * sys.n, order='F' ) #check the orientation
-            print ("vec_q: " +str(vec_q))
-            #DSOHN fix
-            #r.set_initial_value(vec_q)
+            vec_q = np.reshape(np.dot(Q,Q.T), sys.n * sys.n)#, order='F' ) #check the orientation
+            #print ("vec_q: " +str(vec_q))
             tube[:, i] = vec_q
-            #tube[:, i] = np.squeeze(r.y)
-
-            #validating L
-            #sys.F = linalg.expm((sys.A) * abs((r.t - sys.t0)))
-            #F = np.linalg.inv(sys.F)
-            ##inv_F = np.linalg.inv(sys.F)  # verify THIS PROBABLY SINCE ADJOINT EQUATION IS -A
-            ##F = np.linalg.inv(inv_F * sys.F) * inv_F
-            #BPBsr = linalg.sqrtm(sys.BPB)
-            #BPBsr = 0.5 * (BPBsr + BPBsr.T)
-            ## Blocked Schur algorithms for computing the matrix square root
-            #L0 = np.asmatrix(sys.L0).T
-            #l = np.linalg.multi_dot([F.T, L0])
-            #print l
-            #print r.t
             time_tube[i] = r.t
 
         except Exception as e:
@@ -306,43 +261,8 @@ def sys_set_for_debug(sys):
     return y
 
 def deriv_ia_nodist(t,y,n,sys):
-    print ("calculate IA derive here!")
-    #onetime
-    #M = sqrtm(X0);
-    #M = 0.5 * (M + M
-    #');
-    #xl0 = M * l0
-    #dXdt = ell_iesm_ode(t, X, xl0, l0, mydata, n, back)
-    #if hasdisturbance(lsys)
-    #    [tt, Q] = ell_ode_solver( @ ell_iedist_ode, tvals, reshape(X0, d1 * d1, 1), l0, mydata, d1, back);
-    #    Q = Q
-    #    ';
-    #elseif
-    #~(isempty(mydata.BPB))
-    #[tt, Q] = ell_ode_solver( @ ell_iesm_ode, tvals, reshape(M, d1 * d1, 1), M * l0, l0, mydata, d1, back);
-    #Q = fix_iesm(Q
-    #', d1);
-    # "received" + str(y)
-
-    #raw_xl0 = (sys.xl0)
-#
-    #raw_F = sys.F
-#
-    #raw_L0 = sys.L0
-#
-    #raw_y = y
-#
-    #y = sys_set_for_debug(sys)
-
-    print ("y0: " + str(y))
     X = np.reshape(y, (n, n), order='F')  # back to matrix
     A = sys.A
-
-    #xl0 = sys.xl0
-    #xl0 = sys.M*sys.L0
-
-    #xl0 = np.asmatrix(np.linalg.multi_dot([sys.M,sys.L0])).T
-    #print "before update: " +str(sys.F)
     sys.F = linalg.expm((sys.A) * abs((t - sys.t0)))
     F = np.linalg.inv(sys.F)  # verify THIS PROBABLY SINCE ADJOINT EQUATION IS -A
 
@@ -353,40 +273,22 @@ def deriv_ia_nodist(t,y,n,sys):
     BPBsr = 0.5*(BPBsr+BPBsr.T)
     #Blocked Schur algorithms for computing the matrix square root
 
-    L0 = np.asmatrix(sys.L0).T
+    L0 = sys.L0
 
-    L = np.linalg.multi_dot([F.T, L0])
     l = np.linalg.multi_dot([BPBsr, F.T, L0])
     xl0 = np.asmatrix(np.linalg.multi_dot([sys.M, L0]))
     # l = BPBsr * F.T * L0;
 
     if linalg.norm(l) < sys.abs_tol:
         S = np.eye(sys.n)
-        print ("linalg.norm(l) < sys.abs_tol")
     else:
-        print ("linalg.norm(l) > sys.abs_tol")
         l = np.asmatrix(l)
 
-        S = np.reshape(np.asmatrix(ell_valign(xl0, l)),(sys.n,sys.n), order='F')
+        S = np.reshape(np.asmatrix(ell_valign(xl0, l)),(sys.n,sys.n))
 
     dxdt_mat = np.asmatrix(np.linalg.multi_dot([X, A.T]))+np.asmatrix(np.linalg.multi_dot([S, BPBsr]))
 
     dxdt = np.reshape(dxdt_mat,(sys.n*sys.n), order='F')
-
-    #print "t: " + str(t)
-    #print "y: " + str(y)
-    #print "X:" + str(X)
-   #
-    #print "A: " + str(A)
-    #print "X*A.T: " + str(np.dot(X, A.T))
-#
-    #print "l: " + str(l)
-    #print "BPBsr: " + str(BPBsr)
-    #print "S*BPBsr: " + str(np.linalg.multi_dot([S,BPBsr]))
-    #print "S: " + str(S)
-    #print "xl0: " + str(xl0)
-    #print "L: " + str(L)
-    #print dxdt
 
     return dxdt
 
@@ -450,7 +352,7 @@ def inspect_slice(reach_set,sys):
 
 def reach():
     debug = False
-    sys = System(t_end = 5) #SETUP DYNAMIC SYSTEM DESCRIPTION HERE
+    sys = EllSystem(t_end = 5) #SETUP DYNAMIC SYSTEM DESCRIPTION HERE
     print ("starting center traj calculation")
     center_trajectory = reach_center(sys)
     print ("done center traj calculation")
@@ -460,18 +362,20 @@ def reach():
     time_tube=[] #TIME_STAMP RECORD TO GUARANTEE CORRECT TIME SCALING OF THE GUI
 
     for i in range(sys.num_search):
+        #sys.L0 = sys.L[i].T
         sys.L0 = sys.L[i].T
 
         print ("sys.L0: " +str(sys.L0))
-        sys.xl0 = np.asmatrix(np.linalg.multi_dot([sys.M,sys.L0])).T
+        #sys.xl0 = np.asmatrix(np.linalg.multi_dot([sys.M,sys.L0])).T
+        sys.xl0 = (np.linalg.multi_dot([sys.M, sys.L0]))
         print ("sys.xl0: " + str(sys.xl0))
 
-        IA_tube,time_tube = IA_reach_per_search(sys)
+        #IA_tube,time_tube = IA_reach_per_search(sys)
 
         EA_tube, time_tube = EA_reach_per_search(sys)
 
         EA_reach_set[:,:,i] = EA_tube    #time_series x vectorized shape matrix x search direction
-        IA_reach_set[:, :, i] = IA_tube
+        #IA_reach_set[:, :, i] = IA_tube
         #if debug:
             #print "tube shape: " + str(EA_tube.shape)
             #print EA_reach_set.shape
@@ -481,13 +385,13 @@ def reach():
 
 
     #this ev.reach_gui needs to be ported for IA.
-    ev.reach_gui(sys,center_trajectory,IA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="IA")
-    #v.reach_gui(sys,center_trajectory,EA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="EA")
+    #ev.reach_gui(sys,center_trajectory,IA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="IA")
+    ev.reach_gui(sys,center_trajectory,EA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="EA")
 
-    print ("EVOLVE 1")
+    #print ("EVOLVE 1")
     #EA_evolved_reach_set, evolved_center_trajectory, evolved_time_tube = EA_evolve_nodist(EA_reach_set,time_tube,center_trajectory,sys,extra_time=4)
 #
-    print ("EVOLVE 2")
+    #print ("EVOLVE 2")
     #EA_evolved_reach_set, evolved_center_trajectory,evolved_time_tube = EA_evolve_nodist(EA_evolved_reach_set,evolved_time_tube, evolved_center_trajectory, sys, extra_time=3)
 ##
     #ev.reach_gui(sys,evolved_center_trajectory,EA_evolved_reach_set[:,:,:], render_length = sys.len_prop,time_tube = evolved_time_tube, reach_type="EA")
