@@ -45,22 +45,10 @@ class EllSystem(object):
 
     def switch_system(self):
 
-        A = np.array([[0, -10],
-                      [1, -2],
-                      ])
+        self.A = np.matrix('0.000 -10.000; 1.000 -2.000')
 
-        self.A = np.reshape(A, (2, 2))  # packed in matrix form
+        self.B = np.matrix('10.000 0.000; 0.000 1.000')
 
-        B = np.array([[10, 0],
-                      [0, 1],
-                      ])
-
-        self.B = np.reshape(B, (2, 2))  # packed in matrix form
-
-        P = np.array([[1, 0],
-                      [0, 1],
-                      ])
-
-        self.P = np.reshape(P, (2, 2))  # packed in matrix form
+        self.P = np.matrix('1.000 0.000; 0.000 1.000')
 
         self.BPB = np.linalg.multi_dot([self.B, self.P, self.B.T])

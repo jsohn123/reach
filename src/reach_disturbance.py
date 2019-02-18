@@ -389,12 +389,12 @@ def reach():
     ev.reach_gui(sys,center_trajectory,EA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="EA")
 
     #print ("EVOLVE 1")
-    #EA_evolved_reach_set, evolved_center_trajectory, evolved_time_tube = EA_evolve_nodist(EA_reach_set,time_tube,center_trajectory,sys,extra_time=4)
+    EA_evolved_reach_set, evolved_center_trajectory, evolved_time_tube = EA_evolve_nodist(EA_reach_set,time_tube,center_trajectory,sys,extra_time=4)
 #
     #print ("EVOLVE 2")
     #EA_evolved_reach_set, evolved_center_trajectory,evolved_time_tube = EA_evolve_nodist(EA_evolved_reach_set,evolved_time_tube, evolved_center_trajectory, sys, extra_time=3)
 ##
-    #ev.reach_gui(sys,evolved_center_trajectory,EA_evolved_reach_set[:,:,:], render_length = sys.len_prop,time_tube = evolved_time_tube, reach_type="EA")
+    ev.reach_gui(sys,evolved_center_trajectory,EA_evolved_reach_set[:,:,:], render_length = sys.len_prop,time_tube = evolved_time_tube, reach_type="EA")
 
 def main():
     reach()
