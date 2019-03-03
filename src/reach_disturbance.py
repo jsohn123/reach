@@ -370,12 +370,12 @@ def reach():
         sys.xl0 = (np.linalg.multi_dot([sys.M, sys.L0]))
         print ("sys.xl0: " + str(sys.xl0))
 
-        #IA_tube,time_tube = IA_reach_per_search(sys)
+        IA_tube,time_tube = IA_reach_per_search(sys)
 
         EA_tube, time_tube = EA_reach_per_search(sys)
 
         EA_reach_set[:,:,i] = EA_tube    #time_series x vectorized shape matrix x search direction
-        #IA_reach_set[:, :, i] = IA_tube
+        IA_reach_set[:, :, i] = IA_tube
         #if debug:
             #print "tube shape: " + str(EA_tube.shape)
             #print EA_reach_set.shape
@@ -385,7 +385,7 @@ def reach():
 
 
     #this ev.reach_gui needs to be ported for IA.
-    #ev.reach_gui(sys,center_trajectory,IA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="IA")
+    ev.reach_gui(sys,center_trajectory,IA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="IA")
     ev.reach_gui(sys,center_trajectory,EA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="EA")
 
     #print ("EVOLVE 1")
