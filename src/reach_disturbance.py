@@ -4,7 +4,10 @@ from scipy import linalg
 import sys
 import src.ellipsoidal_visualizer as ev
 from src.ell_input_data import EllSystem
+import pdb
 
+
+#NEED INDEX CHECK HELPER!, INDEX LENGTH, APPROX CALCULATION ESTIMATION
 
 def reach_center(sys,evolve = False, y0=[], debug =False):
     #center calculation here
@@ -21,7 +24,7 @@ def reach_center(sys,evolve = False, y0=[], debug =False):
     center_trajectory = np.zeros((sys.n, len_prop), dtype=np.float)
 
     r = ode(deriv_reach_center).set_integrator('dopri5')
-    r.set_initial_value(y0, t0).set_f_params(sys)
+    r.set_initial_value(y0, t0+dt).set_f_params(sys)
 
     center_trajectory[:, 0] = y0
 
@@ -31,16 +34,20 @@ def reach_center(sys,evolve = False, y0=[], debug =False):
         print ("buffer length: " + str(len_prop))
         print ("t0: " + str(t0))
         print ("t1: " + str(t1))
-    while r.successful() and (r.t <= t1): #watch out for comparison error......
+
+    while r.successful() and (i<sys.len_prop):
+    #while r.successful() and (r.t <= t1): #watch out for comparison error......
         r.integrate(r.t + dt)
 
-        try:
-            center_trajectory[:,i] = r.y
-        except Exception as e:
-            if debug:
-                print(e)
-            print ("trajectory_center[:,i] exited at " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1) + " dt: " + str(dt))
-            return center_trajectory
+        center_trajectory[:, i] = r.y
+        print("taken spot " + str(i))
+        #try:
+        #    center_trajectory[:,i] = r.y
+        #except Exception as e:
+        #    if debug:
+        #        print(e)
+        #    print ("trajectory_center[:,i] exited at " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1) + " dt: " + str(dt))
+        #    return center_trajectory
         i += 1
     print ("trajectory_center[:,i] exited at " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1) + " dt: " + str(dt))
     return center_trajectory
@@ -84,7 +91,7 @@ def EA_reach_per_search(sys, evolve = False, y0 = [],debug =False):
     time_tube = np.zeros(len_prop,dtype=np.float)
 
     r = ode(deriv_ea_nodist).set_integrator('vode', atol=1e-13, rtol=1e-13)
-    r.set_initial_value(y0, t0).set_f_params(sys.n)
+    r.set_initial_value(y0, t0+dt).set_f_params(sys.n)
 
     tube[:,0] = np.reshape(y0, (sys.n* sys.n))
 
@@ -96,7 +103,7 @@ def EA_reach_per_search(sys, evolve = False, y0 = [],debug =False):
         print( t0)
         print( "END")
     i = 1
-    while r.successful() and (r.t <= t1):
+    while r.successful() and (i<sys.len_prop):
         #print "starting loop with: " + str(r.t)
         #update_sys(sys, r.t, t0)  # update transition mat phi
         sys.F = linalg.expm((sys.A) * (r.t - t0))
@@ -105,23 +112,32 @@ def EA_reach_per_search(sys, evolve = False, y0 = [],debug =False):
         r.integrate(r.t + dt)
 
         if debug:
-            print("r.y")
-            print(r.y)
-        try:
-            #append tube
-            tube[:,i] = np.reshape(r.y, sys.n * sys.n)
-            time_tube[i] = r.t
-        except Exception as e:
-            if debug:
-                print(e)
-                print("tube[:,i] exited at " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1) + " dt: " + str(dt))
-            return tube, time_tube
+            print(r.t)
+            print(i)
 
-        if debug:
-            print ("tube_prop_number: " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1))
+        tube[:, i] = np.reshape(r.y, sys.n * sys.n)
+        time_tube[i] = r.t
+        print("taken spot " + str(i))
+
+
+        #try:
+        #    #append tube
+        #    tube[:,i] = np.reshape(r.y, sys.n * sys.n)
+        #    time_tube[i] = r.t
+        #except Exception as e:
+        #    if debug:
+        #        print(e)
+        #        print("tube[:,i] exited at " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1) + " dt: " + str(dt))
+        #    return tube, time_tube
+#
+        #if debug:
+        #    print ("tube_prop_number: " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1))
         i += 1
     if debug:
         print ("finished at " + str(r.t))
+
+    print("EA tube[:,i] exited at " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1) + " dt: " + str(dt))
+    print(tube[:,-1])
     return tube, time_tube
 def deriv_ea_nodist(t,y,n,sys):
     #X = np.reshape(y, (n, n)) #back to matrix
@@ -292,7 +308,7 @@ def deriv_ia_nodist(t,y,n,sys):
 
     return dxdt
 
-def EA_evolve_nodist(prev_reach_set,time_tube,prev_center_trajectory,sys, extra_time,debug = False):
+def EA_evolve_nodist(prev_reach_set,time_tube,prev_center_trajectory,sys, extra_time,debug = True):
     sys.switch_system() #only update system matrix, not
 
     sys.t0 = sys.t1 #continuous. hence, 1 time stamp overlap
@@ -303,6 +319,7 @@ def EA_evolve_nodist(prev_reach_set,time_tube,prev_center_trajectory,sys, extra_
     prev_len_prop = sys.len_prop
     sys.len_prop = extra_len_prop
 
+    pdb.set_trace()
     if debug:
         print ("prev_len_prop" + str(prev_len_prop))
         print ("extra_len_prop" + str(extra_len_prop))
@@ -321,6 +338,7 @@ def EA_evolve_nodist(prev_reach_set,time_tube,prev_center_trajectory,sys, extra_
             print ("last of tube: ")
             print (tube[:,-1])
 
+    pdb.set_trace()
     #NOW STITCH THE TUBES AND CENTER TRAJECTORY, MINDFUL OF 1 SAMPLE OVERLAP
     combined_reach_set = np.concatenate((prev_reach_set[:,:-1,:],reach_set),axis = 1)
     combined_center_trajectory = np.concatenate((prev_center_trajectory[:,:-1],evolved_center_trajectory),axis = 1)
@@ -352,7 +370,18 @@ def inspect_slice(reach_set,sys):
 
 def reach():
     debug = False
-    sys = EllSystem(t_end = 5) #SETUP DYNAMIC SYSTEM DESCRIPTION HERE
+
+    system_description= {
+        'A': np.matrix('0.000 -10.000; 2.000 -8.000'),
+        'B': np.matrix('10.000 0.000; 0.000 2.000'),
+        'P': np.matrix('1.000 0.000; 0.000 1.000'),
+        'L': np.matrix('1.000 0.000; 0.000 1.000'),
+        'X0' : np.matrix('1.000 0.000; 0.000 1.000'),
+        'XC' : np.matrix('0.000; 0.000'),
+        'BC' : np.matrix('0.000; 0.000')
+    }
+
+    sys = EllSystem(system_description = system_description, t_end = 5) #SETUP DYNAMIC SYSTEM DESCRIPTION HERE
     print ("starting center traj calculation")
     center_trajectory = reach_center(sys)
     print ("done center traj calculation")
@@ -370,12 +399,12 @@ def reach():
         sys.xl0 = (np.linalg.multi_dot([sys.M, sys.L0]))
         print ("sys.xl0: " + str(sys.xl0))
 
-        IA_tube,time_tube = IA_reach_per_search(sys)
+        #IA_tube,time_tube = IA_reach_per_search(sys)
 
         EA_tube, time_tube = EA_reach_per_search(sys)
 
         EA_reach_set[:,:,i] = EA_tube    #time_series x vectorized shape matrix x search direction
-        IA_reach_set[:, :, i] = IA_tube
+        #IA_reach_set[:, :, i] = IA_tube
         #if debug:
             #print "tube shape: " + str(EA_tube.shape)
             #print EA_reach_set.shape
@@ -385,10 +414,10 @@ def reach():
 
 
     #this ev.reach_gui needs to be ported for IA.
-    ev.reach_gui(sys,center_trajectory,IA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="IA")
+    #ev.reach_gui(sys,center_trajectory,IA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="IA")
     ev.reach_gui(sys,center_trajectory,EA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="EA")
 
-    #print ("EVOLVE 1")
+    #(4,200,2)
     EA_evolved_reach_set, evolved_center_trajectory, evolved_time_tube = EA_evolve_nodist(EA_reach_set,time_tube,center_trajectory,sys,extra_time=4)
 #
     #print ("EVOLVE 2")

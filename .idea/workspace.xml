@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1917defd-adba-4646-b541-386898851571" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ell_input_data.py" afterPath="$PROJECT_DIR$/src/ell_input_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ell_vallign.py" afterPath="$PROJECT_DIR$/src/ell_vallign.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/reach_disturbance.py" afterPath="$PROJECT_DIR$/src/reach_disturbance.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -19,46 +17,18 @@
       <file leaf-file-name="reach_disturbance.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/reach_disturbance.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state relative-caret-position="340">
+              <caret line="338" column="30" lean-forward="true" selection-start-line="338" selection-start-column="30" selection-end-line="338" selection-end-column="30" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
-                <element signature="e#233#1455#0" expanded="false" />
-                <element signature="e#1493#1734#0" expanded="false" />
-                <element signature="e#1808#3627#0" expanded="false" />
-                <element signature="e#3664#4344#0" expanded="false" />
-                <element signature="e#4380#5626#0" expanded="false" />
-                <element signature="e#5701#7540#0" expanded="false" />
-                <element signature="e#7574#8265#0" expanded="false" />
-                <element signature="e#8303#9198#0" expanded="false" />
-                <element signature="e#9305#10936#0" expanded="false" />
-                <element signature="e#10976#11579#0" expanded="false" />
+                <element signature="e#1711#1952#0" expanded="false" />
+                <element signature="e#4149#4829#0" expanded="false" />
+                <element signature="e#4865#6111#0" expanded="false" />
+                <element signature="e#6186#8025#0" expanded="false" />
+                <element signature="e#8059#8750#0" expanded="false" />
+                <element signature="e#8788#9683#0" expanded="false" />
+                <element signature="e#11500#12103#0" expanded="false" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="ellipsoidal_visualizer.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/ellipsoidal_visualizer.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="611">
-              <caret line="190" column="16" lean-forward="true" selection-start-line="190" selection-start-column="16" selection-end-line="190" selection-end-column="16" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-                <element signature="e#268#1309#0" expanded="false" />
-                <element signature="e#1437#3990#0" expanded="false" />
-                <element signature="e#7711#7731#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="ell_vallign.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/ell_vallign.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="611">
-              <caret line="48" column="0" lean-forward="true" selection-start-line="48" selection-start-column="0" selection-end-line="48" selection-end-column="0" />
-              <folding />
             </state>
           </provider>
         </entry>
@@ -66,8 +36,8 @@
       <file leaf-file-name="ell_input_data.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/ell_input_data.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state relative-caret-position="593">
+              <caret line="103" column="0" lean-forward="true" selection-start-line="103" selection-start-column="0" selection-end-line="103" selection-end-column="0" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -104,6 +74,7 @@
       <find>vec</find>
       <find>V1</find>
       <find>_T</find>
+      <find>EA_evolve_nodist</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -133,9 +104,9 @@
         <option value="$PROJECT_DIR$/src/ellipsoidal_visualizer.py" />
         <option value="$PROJECT_DIR$/ell_vallign.py" />
         <option value="$PROJECT_DIR$/test/unit/test_system_class.py" />
-        <option value="$PROJECT_DIR$/src/reach_disturbance.py" />
         <option value="$PROJECT_DIR$/src/ell_vallign.py" />
         <option value="$PROJECT_DIR$/src/ell_input_data.py" />
+        <option value="$PROJECT_DIR$/src/reach_disturbance.py" />
       </list>
     </option>
   </component>
@@ -337,13 +308,13 @@
     <frame x="-6" y="-6" width="1513" height="973" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13342229" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.13342229" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32908458" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32908458" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.19698726" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.27578217" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -364,10 +335,10 @@
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.27809966" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32908458" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.19698726" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.19679786" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13342229" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32908458" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -389,7 +360,7 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="85" />
+      <option name="time" value="86" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -710,6 +681,35 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python37-32/Lib/site-packages/scipy/integrate/_ode.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="375">
+          <caret line="1185" column="13" lean-forward="true" selection-start-line="1185" selection-start-column="13" selection-end-line="1185" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/ellipsoidal_visualizer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="169">
+          <caret line="164" column="42" lean-forward="true" selection-start-line="164" selection-start-column="42" selection-end-line="164" selection-end-column="42" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#268#1309#0" expanded="false" />
+            <element signature="e#1437#3990#0" expanded="false" />
+            <element signature="e#7711#7731#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/ell_vallign.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17">
+          <caret line="1" column="0" lean-forward="true" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/test/unit/test_system_class.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="340">
@@ -720,61 +720,29 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python37-32/Lib/site-packages/scipy/integrate/_ode.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="375">
-          <caret line="1185" column="13" lean-forward="true" selection-start-line="1185" selection-start-column="13" selection-end-line="1185" selection-end-column="13" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/ell_input_data.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        <state relative-caret-position="593">
+          <caret line="103" column="0" lean-forward="true" selection-start-line="103" selection-start-column="0" selection-end-line="103" selection-end-column="0" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/ell_vallign.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="611">
-          <caret line="48" column="0" lean-forward="true" selection-start-line="48" selection-start-column="0" selection-end-line="48" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/ellipsoidal_visualizer.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="611">
-          <caret line="190" column="16" lean-forward="true" selection-start-line="190" selection-start-column="16" selection-end-line="190" selection-end-column="16" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-            <element signature="e#268#1309#0" expanded="false" />
-            <element signature="e#1437#3990#0" expanded="false" />
-            <element signature="e#7711#7731#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/reach_disturbance.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        <state relative-caret-position="340">
+          <caret line="338" column="30" lean-forward="true" selection-start-line="338" selection-start-column="30" selection-end-line="338" selection-end-column="30" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
-            <element signature="e#233#1455#0" expanded="false" />
-            <element signature="e#1493#1734#0" expanded="false" />
-            <element signature="e#1808#3627#0" expanded="false" />
-            <element signature="e#3664#4344#0" expanded="false" />
-            <element signature="e#4380#5626#0" expanded="false" />
-            <element signature="e#5701#7540#0" expanded="false" />
-            <element signature="e#7574#8265#0" expanded="false" />
-            <element signature="e#8303#9198#0" expanded="false" />
-            <element signature="e#9305#10936#0" expanded="false" />
-            <element signature="e#10976#11579#0" expanded="false" />
+            <element signature="e#1711#1952#0" expanded="false" />
+            <element signature="e#4149#4829#0" expanded="false" />
+            <element signature="e#4865#6111#0" expanded="false" />
+            <element signature="e#6186#8025#0" expanded="false" />
+            <element signature="e#8059#8750#0" expanded="false" />
+            <element signature="e#8788#9683#0" expanded="false" />
+            <element signature="e#11500#12103#0" expanded="false" />
           </folding>
         </state>
       </provider>

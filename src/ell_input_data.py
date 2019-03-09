@@ -27,13 +27,16 @@ class EllSystem(object):
 
         else:
             try:
-                self.A = system_description.get('A')
-                self.B = system_description.get('B')
-                self.P = system_description.get('P')
-                self.L = system_description.get('L')
-                self.X0 = system_description.get('X0')
-                self.xc = system_description.get('XC')
-                self.Bp = system_description.get('BC')
+                self.A = system_description['A']
+
+                self.B = system_description['B']
+                self.P = system_description['P']
+
+                self.L = system_description['L']
+                self.X0 = system_description['X0']
+                self.xc = system_description['XC']
+                self.Bp = system_description['BC']
+
             except Exception as e:
                 print(e)
                 raise ValueError("Unable to import system_description. Check your matrix input")
