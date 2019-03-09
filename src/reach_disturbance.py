@@ -9,13 +9,15 @@ import pdb
 
 #NEED INDEX CHECK HELPER!, INDEX LENGTH, APPROX CALCULATION ESTIMATION
 
-def reach_center(sys,evolve = False, y0=[], debug =False):
+def reach_center(sys=[],y0=[],evolve = False,  debug =False):
     #center calculation here
     if evolve:
         print("evolving center from latest result")
         #print y0
     else:
-        y0 = np.reshape(sys.xc, (sys.n))
+        print("using sys.xc")
+        y0 = sys.xc
+
     t0 = float(sys.t0)
     t1 = float(sys.t1)
     dt = float(sys.dt)
@@ -26,7 +28,7 @@ def reach_center(sys,evolve = False, y0=[], debug =False):
     r = ode(deriv_reach_center).set_integrator('dopri5')
     r.set_initial_value(y0, t0+dt).set_f_params(sys)
 
-    center_trajectory[:, 0] = y0
+    center_trajectory[:, 0] = np.reshape(y0,sys.n)
 
     i = 1
     if debug:
@@ -39,8 +41,8 @@ def reach_center(sys,evolve = False, y0=[], debug =False):
     #while r.successful() and (r.t <= t1): #watch out for comparison error......
         r.integrate(r.t + dt)
 
-        center_trajectory[:, i] = r.y
-        print("taken spot " + str(i))
+        center_trajectory[:, i] = np.reshape(r.y,sys.n)
+        #print("taken spot " + str(i))
         #try:
         #    center_trajectory[:,i] = r.y
         #except Exception as e:
@@ -58,13 +60,11 @@ def deriv_reach_center(t,y,sys):
     #print A
     Bp = sys.Bp
 
-    #Gq = sys.Gq
+    dxdt = np.reshape(np.dot(A, x) + Bp.T,(sys.n))
 
-    #print np.dot(A, x)
-    dxdt = np.dot(A, x) + Bp.T
     #dxdt = A * x + Bp
     #print "dxdt" +str(dxdt)
-    return np.reshape(dxdt,(sys.n,1))
+    return dxdt
 
 def EA_reach_per_search(sys, evolve = False, y0 = [],debug =False):
     #returns timeseries evolution of reachable set per direction of search vector from L0
@@ -225,7 +225,7 @@ def IA_reach_per_search(sys,evolve = False, y0 = [],debug = False):
         print (t0)
         print ("END")
     i = 1
-    while r.successful() and (r.t <= t1):
+    while r.successful() and (i < sys.len_prop):
         # update_sys(sys, r.t, t0)  # update transition mat phi
         sys.F = linalg.expm((sys.A) * abs((r.t - t0)))
         # update sys
@@ -308,7 +308,7 @@ def deriv_ia_nodist(t,y,n,sys):
 
     return dxdt
 
-def EA_evolve_nodist(prev_reach_set,time_tube,prev_center_trajectory,sys, extra_time,debug = True):
+def EA_evolve_nodist(prev_reach_set,time_tube,prev_center_trajectory,sys, extra_time,debug = False):
     sys.switch_system() #only update system matrix, not
 
     sys.t0 = sys.t1 #continuous. hence, 1 time stamp overlap
@@ -319,7 +319,6 @@ def EA_evolve_nodist(prev_reach_set,time_tube,prev_center_trajectory,sys, extra_
     prev_len_prop = sys.len_prop
     sys.len_prop = extra_len_prop
 
-    pdb.set_trace()
     if debug:
         print ("prev_len_prop" + str(prev_len_prop))
         print ("extra_len_prop" + str(extra_len_prop))
@@ -338,7 +337,7 @@ def EA_evolve_nodist(prev_reach_set,time_tube,prev_center_trajectory,sys, extra_
             print ("last of tube: ")
             print (tube[:,-1])
 
-    pdb.set_trace()
+
     #NOW STITCH THE TUBES AND CENTER TRAJECTORY, MINDFUL OF 1 SAMPLE OVERLAP
     combined_reach_set = np.concatenate((prev_reach_set[:,:-1,:],reach_set),axis = 1)
     combined_center_trajectory = np.concatenate((prev_center_trajectory[:,:-1],evolved_center_trajectory),axis = 1)
@@ -383,7 +382,7 @@ def reach():
 
     sys = EllSystem(system_description = system_description, t_end = 5) #SETUP DYNAMIC SYSTEM DESCRIPTION HERE
     print ("starting center traj calculation")
-    center_trajectory = reach_center(sys)
+    center_trajectory = reach_center(sys,y0=[],evolve = False,  debug =False)
     print ("done center traj calculation")
 
     EA_reach_set =np.empty((sys.n*sys.n,sys.len_prop, sys.num_search))
@@ -399,12 +398,12 @@ def reach():
         sys.xl0 = (np.linalg.multi_dot([sys.M, sys.L0]))
         print ("sys.xl0: " + str(sys.xl0))
 
-        #IA_tube,time_tube = IA_reach_per_search(sys)
+        IA_tube,time_tube = IA_reach_per_search(sys)
 
         EA_tube, time_tube = EA_reach_per_search(sys)
 
         EA_reach_set[:,:,i] = EA_tube    #time_series x vectorized shape matrix x search direction
-        #IA_reach_set[:, :, i] = IA_tube
+        IA_reach_set[:, :, i] = IA_tube
         #if debug:
             #print "tube shape: " + str(EA_tube.shape)
             #print EA_reach_set.shape
@@ -414,7 +413,7 @@ def reach():
 
 
     #this ev.reach_gui needs to be ported for IA.
-    #ev.reach_gui(sys,center_trajectory,IA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="IA")
+    ev.reach_gui(sys,center_trajectory,IA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="IA")
     ev.reach_gui(sys,center_trajectory,EA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="EA")
 
     #(4,200,2)
