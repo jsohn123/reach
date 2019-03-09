@@ -3,6 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="1917defd-adba-4646-b541-386898851571" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/reach_disturbance.py" afterPath="$PROJECT_DIR$/src/reach_disturbance.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test/unit/test_system_class.py" afterPath="$PROJECT_DIR$/test/unit/test_system_class.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -13,23 +14,23 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="reach_disturbance.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="reach_disturbance.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/reach_disturbance.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="514">
-              <caret line="392" column="28" lean-forward="true" selection-start-line="392" selection-start-column="28" selection-end-line="392" selection-end-column="28" />
+            <state relative-caret-position="441">
+              <caret line="426" column="4" lean-forward="false" selection-start-line="426" selection-start-column="4" selection-end-line="426" selection-end-column="4" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
-                <element signature="e#319#1723#0" expanded="false" />
-                <element signature="e#1761#1959#0" expanded="false" />
-                <element signature="e#2033#4119#0" expanded="false" />
-                <element signature="e#4156#4836#0" expanded="false" />
-                <element signature="e#4872#6118#0" expanded="false" />
-                <element signature="e#6193#8039#0" expanded="false" />
-                <element signature="e#8073#8764#0" expanded="false" />
-                <element signature="e#8802#9697#0" expanded="false" />
-                <element signature="e#9804#11436#0" expanded="false" />
-                <element signature="e#11476#12079#0" expanded="false" />
+                <element signature="e#319#1782#0" expanded="false" />
+                <element signature="e#1820#2018#0" expanded="false" />
+                <element signature="e#2092#4176#0" expanded="false" />
+                <element signature="e#4213#4893#0" expanded="false" />
+                <element signature="e#4929#6175#0" expanded="false" />
+                <element signature="e#6250#8096#0" expanded="false" />
+                <element signature="e#8130#8821#0" expanded="false" />
+                <element signature="e#8859#9754#0" expanded="false" />
+                <element signature="e#9861#11493#0" expanded="false" />
+                <element signature="e#11533#12136#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -38,8 +39,8 @@
       <file leaf-file-name="ell_input_data.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/ell_input_data.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="593">
-              <caret line="103" column="0" lean-forward="true" selection-start-line="103" selection-start-column="0" selection-end-line="103" selection-end-column="0" />
+            <state relative-caret-position="424">
+              <caret line="63" column="111" lean-forward="true" selection-start-line="63" selection-start-column="111" selection-end-line="63" selection-end-column="111" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -47,13 +48,14 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="test_system_class.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="test_system_class.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/test/unit/test_system_class.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="340">
-              <caret line="20" column="59" lean-forward="true" selection-start-line="20" selection-start-column="19" selection-end-line="20" selection-end-column="59" />
+            <state relative-caret-position="408">
+              <caret line="76" column="0" lean-forward="true" selection-start-line="76" selection-start-column="0" selection-end-line="76" selection-end-column="0" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
+                <element signature="e#1052#1405#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -105,10 +107,10 @@
         <option value="$PROJECT_DIR$/reach_disturbance.py" />
         <option value="$PROJECT_DIR$/src/ellipsoidal_visualizer.py" />
         <option value="$PROJECT_DIR$/ell_vallign.py" />
-        <option value="$PROJECT_DIR$/test/unit/test_system_class.py" />
         <option value="$PROJECT_DIR$/src/ell_vallign.py" />
         <option value="$PROJECT_DIR$/src/ell_input_data.py" />
         <option value="$PROJECT_DIR$/src/reach_disturbance.py" />
+        <option value="$PROJECT_DIR$/test/unit/test_system_class.py" />
       </list>
     </option>
   </component>
@@ -712,20 +714,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/test/unit/test_system_class.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="340">
-          <caret line="20" column="59" lean-forward="true" selection-start-line="20" selection-start-column="19" selection-end-line="20" selection-end-column="59" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/ell_input_data.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="593">
-          <caret line="103" column="0" lean-forward="true" selection-start-line="103" selection-start-column="0" selection-end-line="103" selection-end-column="0" />
+        <state relative-caret-position="424">
+          <caret line="63" column="111" lean-forward="true" selection-start-line="63" selection-start-column="111" selection-end-line="63" selection-end-column="111" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
@@ -734,20 +726,31 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/reach_disturbance.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="514">
-          <caret line="392" column="28" lean-forward="true" selection-start-line="392" selection-start-column="28" selection-end-line="392" selection-end-column="28" />
+        <state relative-caret-position="441">
+          <caret line="426" column="4" lean-forward="false" selection-start-line="426" selection-start-column="4" selection-end-line="426" selection-end-column="4" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
-            <element signature="e#319#1723#0" expanded="false" />
-            <element signature="e#1761#1959#0" expanded="false" />
-            <element signature="e#2033#4119#0" expanded="false" />
-            <element signature="e#4156#4836#0" expanded="false" />
-            <element signature="e#4872#6118#0" expanded="false" />
-            <element signature="e#6193#8039#0" expanded="false" />
-            <element signature="e#8073#8764#0" expanded="false" />
-            <element signature="e#8802#9697#0" expanded="false" />
-            <element signature="e#9804#11436#0" expanded="false" />
-            <element signature="e#11476#12079#0" expanded="false" />
+            <element signature="e#319#1782#0" expanded="false" />
+            <element signature="e#1820#2018#0" expanded="false" />
+            <element signature="e#2092#4176#0" expanded="false" />
+            <element signature="e#4213#4893#0" expanded="false" />
+            <element signature="e#4929#6175#0" expanded="false" />
+            <element signature="e#6250#8096#0" expanded="false" />
+            <element signature="e#8130#8821#0" expanded="false" />
+            <element signature="e#8859#9754#0" expanded="false" />
+            <element signature="e#9861#11493#0" expanded="false" />
+            <element signature="e#11533#12136#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test/unit/test_system_class.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="408">
+          <caret line="76" column="0" lean-forward="true" selection-start-line="76" selection-start-column="0" selection-end-line="76" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#1052#1405#0" expanded="false" />
           </folding>
         </state>
       </provider>

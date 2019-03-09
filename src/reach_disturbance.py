@@ -26,7 +26,7 @@ def reach_center(sys=[],y0=[],evolve = False,  debug =False):
     center_trajectory = np.zeros((sys.n, len_prop), dtype=np.float)
 
     r = ode(deriv_reach_center).set_integrator('dopri5')
-    r.set_initial_value(y0, t0+dt).set_f_params(sys)
+    r.set_initial_value(y0, t0).set_f_params(sys)
 
     center_trajectory[:, 0] = np.reshape(y0,sys.n)
 
@@ -52,6 +52,8 @@ def reach_center(sys=[],y0=[],evolve = False,  debug =False):
         #    return center_trajectory
         i += 1
     print ("trajectory_center[:,i] exited at " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1) + " dt: " + str(dt))
+    #print(len(center_trajectory[0, :]))
+    #pdb.set_trace()
     return center_trajectory
 def deriv_reach_center(t,y,sys):
     x = y #in vector form
@@ -91,7 +93,7 @@ def EA_reach_per_search(sys, evolve = False, y0 = [],debug =False):
     time_tube = np.zeros(len_prop,dtype=np.float)
 
     r = ode(deriv_ea_nodist).set_integrator('vode', atol=1e-13, rtol=1e-13)
-    r.set_initial_value(y0, t0+dt).set_f_params(sys.n)
+    r.set_initial_value(y0, t0).set_f_params(sys.n)
 
     tube[:,0] = np.reshape(y0, (sys.n* sys.n))
 
@@ -117,7 +119,7 @@ def EA_reach_per_search(sys, evolve = False, y0 = [],debug =False):
 
         tube[:, i] = np.reshape(r.y, sys.n * sys.n)
         time_tube[i] = r.t
-        print("taken spot " + str(i))
+        #print("taken spot " + str(i))
 
 
         #try:
@@ -413,7 +415,7 @@ def reach():
 
 
     #this ev.reach_gui needs to be ported for IA.
-    ev.reach_gui(sys,center_trajectory,IA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="IA")
+    #ev.reach_gui(sys,center_trajectory,IA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="IA")
     ev.reach_gui(sys,center_trajectory,EA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="EA")
 
     #(4,200,2)
