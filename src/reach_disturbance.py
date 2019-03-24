@@ -167,6 +167,7 @@ def deriv_ea_nodist(t,y,n,sys):
     dxdt = np.dot(A,X) + np.dot(X,A.T)+pp1*X + pp2*BPB
 
     dxdt = np.reshape(0.5*(dxdt+dxdt.T), (sys.n * sys.n),order='F')
+    #dxdt = np.reshape(dxdt,(sys.n * sys.n), order='F')
 
     return dxdt
 
