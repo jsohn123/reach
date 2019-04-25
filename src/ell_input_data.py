@@ -54,7 +54,7 @@ class EllSystem(object):
             raise ValueError("The matrices A,P,X0 must be squared")
 
         # num_search and ndim derive from matrix shape after checks
-        self.num_search = self.L.shape[1]
+        self.num_search = self.L.shape[0] #WAS USING [1]
         self.n = self.A.shape[1]
 
         self.abs_tol = 0.0001

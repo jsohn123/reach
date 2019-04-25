@@ -6,9 +6,6 @@ import src.ellipsoidal_visualizer as ev
 from src.ell_input_data import EllSystem
 import pdb
 
-
-#NEED INDEX CHECK HELPER!, INDEX LENGTH, APPROX CALCULATION ESTIMATION
-
 def reach_center(sys=[],y0=[],evolve = False,  debug =False):
     #center calculation here
     if evolve:
@@ -141,6 +138,7 @@ def EA_reach_per_search(sys, evolve = False, y0 = [],debug =False):
     print("EA tube[:,i] exited at " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1) + " dt: " + str(dt))
     print(tube[:,-1])
     return tube, time_tube
+
 def deriv_ea_nodist(t,y,n,sys):
     #X = np.reshape(y, (n, n)) #back to matrix
     X = np.reshape(y, (n, n), order='F')
@@ -228,56 +226,24 @@ def IA_reach_per_search(sys,evolve = False, y0 = [],debug = False):
         print (t0)
         print ("END")
     i = 1
+
     while r.successful() and (i < sys.len_prop):
         # update_sys(sys, r.t, t0)  # update transition mat phi
         sys.F = linalg.expm((sys.A) * abs((r.t - t0)))
         # update sys
         r.set_f_params(sys.n, sys)
         r.integrate(r.t + dt)
-        try:
-            #FIX IESM HERE
-            #FIX_IESM - returns values for (Q' * Q).
-            Q = np.reshape(r.y, (sys.n, sys.n))
-            vec_q = np.reshape(np.dot(Q,Q.T), sys.n * sys.n)#, order='F' ) #check the orientation
-            #print ("vec_q: " +str(vec_q))
-            tube[:, i] = vec_q
-            time_tube[i] = r.t
-
-        except Exception as e:
-            if debug:
-                print (e)
-                print ("tube[:,i] exited at " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1) + " dt: " + str(dt))
-            return tube, time_tube
+        Q = np.reshape(r.y, (sys.n, sys.n))
+        vec_q = np.reshape(np.dot(Q, Q.T), sys.n * sys.n)  # , order='F' ) #check the orientation
+        # print ("vec_q: " +str(vec_q))
+        tube[:, i] = vec_q
+        time_tube[i] = r.t
         if debug:
             print ("tube_prop_number: " + str(i) + " r.t: " + str(r.t) + " t1: " + str(t1))
         i += 1
     if debug:
         print( "finished at " + str(r.t))
     return tube, time_tube
-
-def sys_set_for_debug(sys):
-    xl0 = np.array([[1.00],
-                       [0.00],
-                       ], dtype='Float64')
-    sys.xl0 =  np.reshape(xl0, (2, 1))  # packed in matrix form
-
-    F = np.array([[0.9912], [0.3165],
-                  [-0.0633], [1.2444],
-                  ], dtype='Float64')
-    sys.F = np.reshape(F, (2, 2)) #packed in matrix form
-
-    L0 = np.array([[1.00],
-                    [0.00],
-                    ], dtype='Float64')
-    sys.L0 = np.reshape(L0, (1, 2))  # packed in matrix form
-
-    y = np.array([[1],
-                   [0],
-                   [0],
-                   [1]]
-                 , dtype='Float64')
-    y = np.reshape(y, (4, 1))  # packed in matrix form
-    return y
 
 def deriv_ia_nodist(t,y,n,sys):
     X = np.reshape(y, (n, n), order='F')  # back to matrix
@@ -351,33 +317,63 @@ def EA_evolve_nodist(prev_reach_set,time_tube,prev_center_trajectory,sys, extra_
 
     return combined_reach_set, combined_center_trajectory, combined_time_tube
 
-def inspect_slice(reach_set,sys):
-    #expand this later to properly time stamped version
-    print (" AT TIME N=0")
-    for i in range(sys.num_search):
-        print ("reach_set at " + str(i)+ "th direction")
-        print (sys.L[i].T)
-        print (reach_set[:,0,i])
+def reach_evolve_nodist(prev_reach_set,time_tube,prev_center_trajectory,sys, extra_time,reach_type,debug = False):
+    #sys.switch_system() #only update system matrix, not
 
-    print (" AT TIME N=170")
-    for i in range(sys.num_search):
-        print ("reach_set at " + str(i)+ "th direction")
-        print (sys.L[i].T)
-        print (reach_set[:,170,i])
-    print (" AT TIME N=171")
-    for i in range(sys.num_search):
-        print( "reach_set at " + str(i) + "th direction")
-        print( sys.L[i].T)
-        print( reach_set[:, 171, i])
+    sys.t0 = sys.t1 #continuous. hence, 1 time stamp overlap
+    sys.t1 = sys.t1 + extra_time
+    sys.time_grid, sys.dt = np.linspace(sys.t0, sys.t1, sys.time_grid_size, dtype=float, retstep=True)
+    extra_len_prop = sys.time_grid_size
 
-def reach():
+    prev_len_prop = sys.len_prop
+    sys.len_prop = extra_len_prop
+
+    if debug:
+        print ("prev_len_prop" + str(prev_len_prop))
+        print ("extra_len_prop" + str(extra_len_prop))
+
+    evolved_center_trajectory = reach_center(sys,evolve = True, y0 = prev_center_trajectory[:,-1]) #resume from last element
+
+    reach_set = np.empty((sys.n * sys.n, sys.len_prop, sys.num_search))
+
+    for i in range(sys.num_search):
+        sys.L0 = sys.L[i].T
+        if reach_type == "EA":
+            tube, extra_time_tube = EA_reach_per_search(sys, evolve= True, y0 = prev_reach_set[:,-1,i]) #resume from last element
+        elif reach_type == "IA":
+            tube, extra_time_tube = IA_reach_per_search(sys, evolve=True,  y0=prev_reach_set[:, -1, i])  # resume from last element
+        else:
+            raise ValueError("neither EA NOR IA")
+
+        reach_set[:,:,i] = tube    #time_series x vectorized shape matrix x search direction
+        if debug:
+            print ("tube shape: " + str(tube.shape))
+            print (reach_set.shape)
+            print ("last of tube: ")
+            print (tube[:,-1])
+
+
+    #NOW STITCH THE TUBES AND CENTER TRAJECTORY, MINDFUL OF 1 SAMPLE OVERLAP
+    combined_reach_set = np.concatenate((prev_reach_set[:,:-1,:],reach_set),axis = 1)
+    combined_center_trajectory = np.concatenate((prev_center_trajectory[:,:-1],evolved_center_trajectory),axis = 1)
+
+    sys.len_prop = prev_len_prop + extra_len_prop-1
+
+    combined_time_tube = np.append(time_tube[:prev_len_prop-1],extra_time_tube)
+
+    return combined_reach_set, combined_center_trajectory, combined_time_tube
+
+#insert disturbance versions of these. EA....
+
+def main():
     debug = False
 
+    #TODO; ADD IN CHECKS TO SEE IF L VECTORS ARE UNIT VECTORS
     system_description= {
         'A': np.matrix('0.000 -10.000; 2.000 -8.000'),
         'B': np.matrix('10.000 0.000; 0.000 2.000'),
         'P': np.matrix('1.000 0.000; 0.000 1.000'),
-        'L': np.matrix('1.000 0.000; 0.000 1.000'),
+        'L': np.matrix('1.000 0.000; 0.000 1.000;0.5 0.5'),
         'X0' : np.matrix('1.000 0.000; 0.000 1.000'),
         'XC' : np.matrix('0.000; 0.000'),
         'BC' : np.matrix('0.000; 0.000')
@@ -403,32 +399,32 @@ def reach():
 
         IA_tube,time_tube = IA_reach_per_search(sys)
 
-        EA_tube, time_tube = EA_reach_per_search(sys)
+        #EA_tube, time_tube = EA_reach_per_search(sys)
 
-        EA_reach_set[:,:,i] = EA_tube    #time_series x vectorized shape matrix x search direction
+        #EA_reach_set[:,:,i] = EA_tube    #time_series x vectorized shape matrix x search direction
         IA_reach_set[:, :, i] = IA_tube
-        #if debug:
-            #print "tube shape: " + str(EA_tube.shape)
-            #print EA_reach_set.shape
-            #print "last of tube: "
-            #print EA_tube[:, -1]
-    #inspect_slice(reach_set,sys)
 
 
     #this ev.reach_gui needs to be ported for IA.
-    #ev.reach_gui(sys,center_trajectory,IA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="IA")
-    ev.reach_gui(sys,center_trajectory,EA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="EA")
+    ev.reach_gui(sys,center_trajectory,IA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="IA")
+    #ev.reach_gui(sys,center_trajectory,EA_reach_set,render_length=sys.len_prop,time_tube=time_tube, reach_type="EA")
 
     #(4,200,2)
-    EA_evolved_reach_set, evolved_center_trajectory, evolved_time_tube = EA_evolve_nodist(EA_reach_set,time_tube,center_trajectory,sys,extra_time=4)
+    #EA_evolved_reach_set, evolved_center_trajectory, evolved_time_tube = EA_evolve_nodist(EA_reach_set,time_tube,center_trajectory,sys,extra_time=4)
+
+    #EA_evolved_reach_set, evolved_center_trajectory, evolved_time_tube = reach_evolve_nodist(EA_reach_set,time_tube,center_trajectory,sys,reach_type="EA",extra_time=4)
+    IA_evolved_reach_set, evolved_center_trajectory, evolved_time_tube = reach_evolve_nodist(IA_reach_set, time_tube,
+                                                                                         center_trajectory, sys,
+                                                                                             reach_type="IA",
+                                                                                             extra_time=4)
 #
     #print ("EVOLVE 2")
     #EA_evolved_reach_set, evolved_center_trajectory,evolved_time_tube = EA_evolve_nodist(EA_evolved_reach_set,evolved_time_tube, evolved_center_trajectory, sys, extra_time=3)
 ##
-    ev.reach_gui(sys,evolved_center_trajectory,EA_evolved_reach_set[:,:,:], render_length = sys.len_prop,time_tube = evolved_time_tube, reach_type="EA")
+    #ev.reach_gui(sys,evolved_center_trajectory,EA_evolved_reach_set[:,:,:], render_length = sys.len_prop,time_tube = evolved_time_tube, reach_type="EA")
+    ev.reach_gui(sys, evolved_center_trajectory, IA_evolved_reach_set[:, :, :], render_length=sys.len_prop,
+                 time_tube=evolved_time_tube, reach_type="IA")
 
-def main():
-    reach()
 
 if __name__ == "__main__":
 
