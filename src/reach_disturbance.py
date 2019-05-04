@@ -197,7 +197,12 @@ def ell_valign(vec_v, vec_x):
 def IA_reach_per_search(sys,evolve = False, y0 = [],debug = False):
 
     if evolve:
+        y0_sqrt = linalg.sqrtm(np.reshape(y0, (sys.n, sys.n)))
+        #y0_sqrt = 0.5 * (y0_sqrt + y0_sqrt.T)
         print ("evolving from latest tube result")
+        y0 = np.reshape(y0_sqrt, (sys.n * sys.n), 1).T
+        y0_sqrt = 0.5 * (y0_sqrt + y0_sqrt.T)
+        sys.M =  y0_sqrt
     else:
         y0 = np.reshape(sys.M, (sys.n * sys.n), 1).T
 
@@ -229,7 +234,7 @@ def IA_reach_per_search(sys,evolve = False, y0 = [],debug = False):
 
     while r.successful() and (i < sys.len_prop):
         # update_sys(sys, r.t, t0)  # update transition mat phi
-        sys.F = linalg.expm((sys.A) * abs((r.t - t0)))
+        #sys.F = linalg.expm((sys.A) * abs((r.t - t0)))
         # update sys
         r.set_f_params(sys.n, sys)
         r.integrate(r.t + dt)
@@ -361,6 +366,7 @@ def reach_evolve_nodist(prev_reach_set,time_tube,prev_center_trajectory,sys, ext
 
     combined_time_tube = np.append(time_tube[:prev_len_prop-1],extra_time_tube)
 
+    #pdb.set_trace()
     return combined_reach_set, combined_center_trajectory, combined_time_tube
 
 #insert disturbance versions of these. EA....
@@ -416,7 +422,7 @@ def main():
     IA_evolved_reach_set, evolved_center_trajectory, evolved_time_tube = reach_evolve_nodist(IA_reach_set, time_tube,
                                                                                          center_trajectory, sys,
                                                                                              reach_type="IA",
-                                                                                             extra_time=4)
+                                                                                             extra_time=5)
 #
     #print ("EVOLVE 2")
     #EA_evolved_reach_set, evolved_center_trajectory,evolved_time_tube = EA_evolve_nodist(EA_evolved_reach_set,evolved_time_tube, evolved_center_trajectory, sys, extra_time=3)
